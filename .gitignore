@@ -6,7 +6,7 @@
 ._*
 
 # Custom folder icons
-Icon
+Icon
 
 # Volume root files
 .DocumentRevisions-V100
@@ -30,5 +30,13 @@ Icon
 
 # Built Visual Studio Code Extensions
 *.vsix
+
 tmp
-.vscode
+
+node_modules
+.svelte-kit
+src/paraglide
+build
+coverage
+playwright-report
+test-results

@@ -1,0 +1,11 @@
+{
+  "name": "Mix-it",
+  "short_name": "Mix-it",
+  "description": "Bereken de hoeveelheid vloeistof voor een bouwproduct.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#102a2c",
+  "lang": "nl-BE",
+  "icons": []
+}

@@ -1,0 +1,116 @@
+{
+  "dataVersion": "2025.02.03",
+  "variants": [
+    {
+      "id": "knauf-goldband-e-be",
+      "productFamilyId": "knauf-goldband-e",
+      "manufacturer": "Knauf Belgium",
+      "market": "BE",
+      "name": "Knauf Goldband E",
+      "productCode": "P131",
+      "category": "Gipspleister",
+      "aliases": ["Goldband", "binnenpleister", "gipspleister"],
+      "packaging": {
+        "powderKg": 25,
+        "packageLabel": "Zak van 25 kg"
+      },
+      "mixingRatio": {
+        "powderKg": 25,
+        "liquidLitres": 16
+      },
+      "referenceConsumption": {
+        "powderKgPerSquareMetre": 8,
+        "referenceThicknessMm": 10
+      },
+      "supportedThicknessRange": {
+        "minMm": 5,
+        "maxMm": 25
+      },
+      "translations": {
+        "nl": {
+          "name": "Knauf Goldband E",
+          "category": "Gipspleister",
+          "mixingInstructions": "Strooi een zak van 25 kg in ongeveer 16 liter zuiver leidingwater. Laat enkele minuten rusten en meng daarna met een mixer tot een klontvrije massa.",
+          "mixingTime": "Enkele minuten",
+          "workingTime": "Ongeveer 2,5 tot 3 uur",
+          "disclaimer": "Dit is een berekening op basis van de ingevoerde poedermassa. Controleer altijd de technische fiche en volg de voorschriften van de fabrikant."
+        },
+        "en": {
+          "name": "Knauf Goldband E",
+          "category": "Gypsum plaster",
+          "mixingInstructions": "Add one 25 kg bag to approximately 16 litres of clean tap water. Let it rest for a few minutes, then mix until lump-free.",
+          "mixingTime": "A few minutes",
+          "workingTime": "Approximately 2.5 to 3 hours",
+          "disclaimer": "This is an estimate based on the powder mass entered. Always check the technical sheet and follow the manufacturer’s instructions."
+        }
+      },
+      "sourceDocument": {
+        "id": "knauf-p131-goldband-e-nl-0125",
+        "fileName": "Goldband-TECH-PROD-NL.pdf",
+        "title": "P131 - Knauf Goldband E",
+        "version": "01/2025",
+        "publicationDate": "2025-01"
+      },
+      "catalogReview": {
+        "status": "complete",
+        "lastReviewed": "2025-02-03"
+      },
+      "catalogDataVersion": "2025.02.03"
+    },
+    {
+      "id": "knauf-mixem-basic-be-draft",
+      "productFamilyId": "knauf-mixem-basic",
+      "manufacturer": "Knauf Belgium",
+      "market": "BE",
+      "name": "Knauf MiXem Basic",
+      "productCode": "P252",
+      "category": "Kalkcementpleister",
+      "aliases": ["MiXem Basic", "basispleister"],
+      "packaging": {
+        "powderKg": 25,
+        "packageLabel": "Zak van 25 kg"
+      },
+      "mixingRatio": {
+        "powderKg": 25,
+        "liquidLitres": 4.7
+      },
+      "referenceConsumption": {
+        "powderKgPerSquareMetre": 23.1,
+        "referenceThicknessMm": 15
+      },
+      "supportedThicknessRange": {
+        "minMm": 10,
+        "maxMm": 20
+      },
+      "translations": {
+        "nl": {
+          "name": "Knauf MiXem Basic",
+          "category": "Kalkcementpleister",
+          "mixingInstructions": "Voeg ongeveer 4,7 liter zuiver leidingwater toe aan een zak van 25 kg en meng gedurende 3 tot 4 minuten met een mixer.",
+          "mixingTime": "3 tot 4 minuten",
+          "workingTime": "Volgens de omstandigheden op de werf",
+          "disclaimer": "Dit is een kandidaat-record en is nog niet gepubliceerd in de catalogus."
+        },
+        "en": {
+          "name": "Knauf MiXem Basic",
+          "category": "Lime-cement plaster",
+          "mixingInstructions": "Add approximately 4.7 litres of clean tap water to a 25 kg bag and mix with a mixer for 3 to 4 minutes.",
+          "mixingTime": "3 to 4 minutes",
+          "workingTime": "Depending on conditions on site",
+          "disclaimer": "This is a candidate record and has not yet been published in the catalog."
+        }
+      },
+      "sourceDocument": {
+        "id": "knauf-p252-mixem-basic-nl-0724",
+        "fileName": "MiXem Basic_TECH-PROD_P252_NL.pdf",
+        "title": "P252 - Knauf MiXem Basic",
+        "version": "07/2024",
+        "publicationDate": "2024-07"
+      },
+      "catalogReview": {
+        "status": "pending"
+      },
+      "catalogDataVersion": "2025.02.03"
+    }
+  ]
+}
