@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and specs are tracked in Linear under the Brenner team and the `mix-it` project. See `docs/agents/issue-tracker.md`.
+Issues and specs are tracked in GitHub Issues for `brenner-company/mix-it`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
