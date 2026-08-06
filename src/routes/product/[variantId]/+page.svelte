@@ -4,9 +4,17 @@
   import type { Language, Market } from '$lib/catalog/catalog';
   import AppTopbar from '$lib/components/AppTopbar.svelte';
   import {
+    calculateAreaRequirements,
     calculateRequiredLiquid
   } from '$lib/calculation/calculation';
-  import { formatEnteredPowderMass, formatLiquidQuantity, parseMetricInput } from '$lib/presentation/number-formatting';
+  import {
+    formatEnteredPowderMass,
+    formatLiquidQuantity,
+    formatMetricNumber,
+    formatPowderQuantity,
+    parseMetricInput,
+    parseNonNegativeMetricInput
+  } from '$lib/presentation/number-formatting';
   import { getMessages } from '$lib/i18n/messages';
   import { readLanguage, readMarket, selectLanguage, selectMarket } from '$lib/preferences';
 
@@ -15,15 +23,29 @@
 
   let language = $state<Language>(readLanguage());
   let market = $state<Market>(readMarket());
+  let calculatorMode = $state<'powder' | 'area'>('powder');
   let powderInput = $state('');
   let validationMessage = $state('');
   let enteredPowderMass = $state<number | null>(null);
   let submittedPowderInput = $state('');
+  let areaInput = $state('');
+  let thicknessInput = $state<string | undefined>(undefined);
+  let wasteMarginInput = $state('10');
+  let areaValidationMessage = $state('');
+  let areaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
 
   const copy = $derived(getMessages(language));
   const translation = $derived(variant.translations[language]);
   const liquid = $derived(
     enteredPowderMass === null ? null : calculateRequiredLiquid(enteredPowderMass, variant)
+  );
+  const areaAvailable = $derived(variant.referenceConsumption?.referenceThicknessMm !== undefined);
+  const displayedThickness = $derived(
+    thicknessInput ?? variant.referenceConsumption?.referenceThicknessMm?.toString() ?? ''
+  );
+  const showGuidance = $derived(
+    (calculatorMode === 'powder' && liquid !== null) ||
+      (calculatorMode === 'area' && areaCalculation !== null)
   );
   const enteredPowderDisplay = $derived(
     submittedPowderInput ? formatEnteredPowderMass(submittedPowderInput, market) : ''
@@ -35,6 +57,14 @@
 
   function changeMarket(event: Event): void {
     market = selectMarket(event);
+  }
+
+  function selectCalculatorMode(mode: 'powder' | 'area'): void {
+    calculatorMode = mode;
+  }
+
+  function changeThickness(event: Event): void {
+    thicknessInput = (event.currentTarget as HTMLInputElement).value;
   }
 
   function calculate(event: SubmitEvent): void {
@@ -51,6 +81,49 @@
     validationMessage = '';
     enteredPowderMass = parsedMass;
     submittedPowderInput = powderInput;
+  }
+
+  function calculateArea(event: SubmitEvent): void {
+    event.preventDefault();
+
+    const referenceConsumption = variant.referenceConsumption;
+    if (!referenceConsumption?.referenceThicknessMm) return;
+    const completeReferenceConsumption = {
+      powderKgPerSquareMetre: referenceConsumption.powderKgPerSquareMetre,
+      referenceThicknessMm: referenceConsumption.referenceThicknessMm
+    };
+
+    const parsedArea = parseMetricInput(areaInput);
+    const parsedThickness = parseMetricInput(displayedThickness);
+    const parsedWasteMargin = parseNonNegativeMetricInput(wasteMarginInput);
+
+    if (parsedArea === null) {
+      areaCalculation = null;
+      areaValidationMessage = copy.invalidArea;
+      return;
+    }
+
+    if (parsedThickness === null) {
+      areaCalculation = null;
+      areaValidationMessage = copy.invalidThickness;
+      return;
+    }
+
+    if (parsedWasteMargin === null) {
+      areaCalculation = null;
+      areaValidationMessage = copy.invalidWasteMargin;
+      return;
+    }
+
+    areaValidationMessage = '';
+    areaCalculation = calculateAreaRequirements({
+      areaSquareMetres: parsedArea,
+      thicknessMm: parsedThickness,
+      wasteMargin: parsedWasteMargin / 100,
+      mixingRatio: variant.mixingRatio,
+      referenceConsumption: completeReferenceConsumption,
+      supportedThicknessRange: variant.supportedThicknessRange
+    });
   }
 </script>
 
@@ -77,29 +150,104 @@
       <p>{copy.calculatorIntro}</p>
     </div>
 
-    <form onsubmit={calculate} novalidate>
-      <label for="powder-mass" class="field-label">{copy.powderLabel}</label>
-      <div class="input-with-unit">
-        <input
-          id="powder-mass"
-          bind:value={powderInput}
-          aria-describedby="powder-hint powder-error"
-          aria-invalid={validationMessage ? 'true' : 'false'}
-          inputmode="decimal"
-          autocomplete="off"
-          type="text"
-          placeholder={language === 'nl' ? '12,5' : '12.5'}
-        />
-        <span aria-hidden="true">kg</span>
-      </div>
-      <p id="powder-hint" class="field-hint">{copy.powderHint}</p>
-      {#if validationMessage}
-        <p id="powder-error" class="error-message" role="alert">{validationMessage}</p>
-      {/if}
-      <button type="submit">{copy.calculate} <span aria-hidden="true">→</span></button>
-    </form>
+    <div class="mode-selector" role="group" aria-label={copy.calculatorModeLabel}>
+      <button
+        type="button"
+        class={calculatorMode === 'powder' ? 'mode-button mode-active' : 'mode-button'}
+        aria-pressed={calculatorMode === 'powder'}
+        onclick={() => selectCalculatorMode('powder')}
+      >{copy.powderMode}</button>
+      <button
+        type="button"
+        class={calculatorMode === 'area' ? 'mode-button mode-active' : 'mode-button'}
+        aria-pressed={calculatorMode === 'area'}
+        disabled={!areaAvailable}
+        onclick={() => selectCalculatorMode('area')}
+      >{copy.areaMode}</button>
+    </div>
 
-    {#if liquid !== null}
+    {#if !areaAvailable}
+      <p class="area-unavailable" role="status">{copy.areaUnavailable}</p>
+    {/if}
+
+    {#if calculatorMode === 'powder'}
+      <form onsubmit={calculate} novalidate>
+        <label for="powder-mass" class="field-label">{copy.powderLabel}</label>
+        <div class="input-with-unit">
+          <input
+            id="powder-mass"
+            bind:value={powderInput}
+            aria-describedby="powder-hint powder-error"
+            aria-invalid={validationMessage ? 'true' : 'false'}
+            inputmode="decimal"
+            autocomplete="off"
+            type="text"
+            placeholder={language === 'nl' ? '12,5' : '12.5'}
+          />
+          <span aria-hidden="true">kg</span>
+        </div>
+        <p id="powder-hint" class="field-hint">{copy.powderHint}</p>
+        {#if validationMessage}
+          <p id="powder-error" class="error-message" role="alert">{validationMessage}</p>
+        {/if}
+        <button type="submit">{copy.calculate} <span aria-hidden="true">→</span></button>
+      </form>
+    {:else if areaAvailable}
+      <form onsubmit={calculateArea} novalidate>
+        <label for="area" class="field-label">{copy.areaLabel}</label>
+        <div class="input-with-unit">
+          <input
+            id="area"
+            bind:value={areaInput}
+            aria-describedby="area-hint area-error"
+            aria-invalid={areaValidationMessage ? 'true' : 'false'}
+            inputmode="decimal"
+            autocomplete="off"
+            type="text"
+            placeholder={language === 'nl' ? '25' : '25'}
+          />
+          <span aria-hidden="true">m²</span>
+        </div>
+        <p id="area-hint" class="field-hint">{copy.areaHint}</p>
+
+        <label for="thickness" class="field-label">{copy.thicknessLabel}</label>
+        <div class="input-with-unit">
+          <input
+            id="thickness"
+            value={displayedThickness}
+            oninput={changeThickness}
+            aria-describedby="thickness-hint area-error"
+            aria-invalid={areaValidationMessage ? 'true' : 'false'}
+            inputmode="decimal"
+            autocomplete="off"
+            type="text"
+          />
+          <span aria-hidden="true">mm</span>
+        </div>
+        <p id="thickness-hint" class="field-hint">{copy.thicknessHint}</p>
+
+        <label for="waste-margin" class="field-label">{copy.wasteMarginLabel}</label>
+        <div class="input-with-unit">
+          <input
+            id="waste-margin"
+            bind:value={wasteMarginInput}
+            aria-describedby="waste-margin-hint area-error"
+            aria-invalid={areaValidationMessage ? 'true' : 'false'}
+            inputmode="decimal"
+            autocomplete="off"
+            type="text"
+          />
+          <span aria-hidden="true">%</span>
+        </div>
+        <p id="waste-margin-hint" class="field-hint">{copy.wasteMarginHint}</p>
+        {#if areaValidationMessage}
+          <p id="area-error" class="error-message" role="alert">{areaValidationMessage}</p>
+        {/if}
+        <button type="submit">{copy.calculateArea} <span aria-hidden="true">→</span></button>
+      </form>
+    {/if}
+
+    {#if calculatorMode === 'powder' && liquid !== null}
       <div class="calculation-result" aria-live="polite" data-testid="calculation-result">
         <p class="result-label">{copy.resultTitle}</p>
         <p class="liquid-value">{formatLiquidQuantity(liquid, market)}</p>
@@ -107,7 +255,49 @@
           {copy.enteredPowder}: <strong>{enteredPowderDisplay} kg</strong>
         </p>
       </div>
+    {:else if calculatorMode === 'area' && areaCalculation !== null}
+      <div class="calculation-result area-calculation-result" aria-live="polite" data-testid="area-calculation-result">
+        <p class="result-label">{copy.areaResultTitle}</p>
+        <div class="area-quantities">
+          <div>
+            <p class="quantity-label">{copy.requiredPowder}</p>
+            <p class="powder-value">{formatPowderQuantity(areaCalculation.requiredPowderKg, market)}</p>
+          </div>
+          <div>
+            <p class="quantity-label">{copy.requiredLiquid}</p>
+            <p class="liquid-value">{formatLiquidQuantity(areaCalculation.requiredLiquidLitres, market)}</p>
+          </div>
+        </div>
+        <dl class="assumptions-list">
+          <div>
+            <dt>{copy.areaAssumptionArea}</dt>
+            <dd>{formatMetricNumber(areaCalculation.assumptions.areaSquareMetres, market)} m²</dd>
+          </div>
+          <div>
+            <dt>{copy.areaAssumptionThickness}</dt>
+            <dd>{formatMetricNumber(areaCalculation.assumptions.thicknessMm, market)} mm</dd>
+          </div>
+          <div>
+            <dt>{copy.wasteMarginLabel}</dt>
+            <dd>
+              {copy.areaAssumptionWasteMargin(
+                formatMetricNumber(areaCalculation.assumptions.wasteMargin * 100, market)
+              )}
+            </dd>
+          </div>
+        </dl>
+        {#if areaCalculation.outsideSupportedThicknessRange}
+          <p class="range-warning" role="alert">
+            {copy.outsideGuidance(
+              formatMetricNumber(variant.supportedThicknessRange.minMm, market),
+              formatMetricNumber(variant.supportedThicknessRange.maxMm, market)
+            )}
+          </p>
+        {/if}
+      </div>
+    {/if}
 
+    {#if showGuidance}
       <div class="guidance">
         <div class="guidance-block">
           <h3>{copy.mixingInstructions}</h3>
@@ -213,6 +403,48 @@
     padding: 0.6rem;
   }
 
+  .mode-selector {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    padding: 0.35rem;
+    border-radius: 0.9rem;
+    background: #f5f0e8;
+  }
+
+  .mode-button {
+    min-height: 2.8rem;
+    margin: 0;
+    color: var(--ink);
+    background: transparent;
+  }
+
+  .mode-button:hover,
+  .mode-button.mode-active {
+    color: var(--ink);
+    background: var(--paper);
+  }
+
+  .mode-button.mode-active {
+    box-shadow: 0 0.2rem 0.65rem rgba(16, 42, 44, 0.1);
+  }
+
+  .mode-button:disabled {
+    color: var(--muted);
+    background: transparent;
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  .area-unavailable {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    border-left: 4px solid var(--line);
+    color: var(--muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
   .input-with-unit {
     position: relative;
   }
@@ -282,6 +514,66 @@
   .result-detail {
     margin-bottom: 0;
     color: var(--muted);
+  }
+
+  .area-quantities {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .area-quantities > div {
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(16, 42, 44, 0.14);
+  }
+
+  .quantity-label {
+    margin-bottom: 0.25rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .powder-value {
+    margin: 0;
+    color: var(--ink);
+    font-size: clamp(2.35rem, 10vw, 4rem);
+    font-weight: 850;
+    letter-spacing: -0.08em;
+    line-height: 0.95;
+  }
+
+  .area-quantities .liquid-value {
+    margin-bottom: 0;
+  }
+
+  .assumptions-list {
+    display: grid;
+    gap: 0.55rem;
+    margin: 1.25rem 0 0;
+  }
+
+  .assumptions-list div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid rgba(16, 42, 44, 0.1);
+  }
+
+  .assumptions-list dt,
+  .assumptions-list dd {
+    margin: 0;
+  }
+
+  .range-warning {
+    margin: 1.25rem 0 0;
+    padding: 0.9rem 1rem;
+    border-left: 4px solid var(--accent);
+    color: #7d3023;
+    background: #fff4e7;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.5;
   }
 
   .guidance {
@@ -392,6 +684,12 @@
 
     .calculator-intro {
       padding: 0.6rem 0;
+    }
+
+    .calculator > .mode-selector,
+    .calculator > .area-unavailable,
+    .calculator > form {
+      grid-column: 2;
     }
 
     form {

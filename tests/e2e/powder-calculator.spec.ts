@@ -4,7 +4,7 @@ test('mobile user can calculate liquid for a reviewed Market Variant', async ({ 
   await page.goto('/');
 
   await expect(page.getByRole('heading', { name: 'Catalogus' })).toBeVisible();
-  await page.getByRole('link', { name: /open calculator/i }).click();
+  await page.getByRole('link', { name: /Knauf Goldband E/ }).click();
 
   await expect(page.getByRole('heading', { name: 'Knauf Goldband E', exact: true })).toBeVisible();
   await page.getByLabel('Poedermassa').fill('12,5');
@@ -19,18 +19,63 @@ test('mobile user can calculate liquid for a reviewed Market Variant', async ({ 
   await expect(page.getByText('Laatst gereviewd: 2025-02-03')).toBeVisible();
 });
 
+test('mobile user can calculate powder and liquid for a direct area', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await expect(page.getByLabel('Oppervlakte')).toHaveValue('');
+  await expect(page.getByLabel('Laagdikte')).toHaveValue('10');
+  await expect(page.getByLabel('Verspillingsmarge')).toHaveValue('10');
+
+  await page.getByLabel('Oppervlakte').fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  const result = page.getByTestId('area-calculation-result');
+  await expect(result).toContainText('Benodigd poeder');
+  await expect(result).toContainText('88 kg');
+  await expect(result).toContainText('Benodigde vloeistof');
+  await expect(result).toContainText('56,3 L');
+  await expect(result).toContainText('Oppervlakte');
+  await expect(result).toContainText('10 m²');
+  await expect(result).toContainText('Laagdikte');
+  await expect(result).toContainText('10 mm');
+  await expect(result).toContainText('Verspillingsmarge: 10%');
+});
+
+test('area mode warns when layer thickness is outside manufacturer guidance', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await page.getByLabel('Oppervlakte').fill('10');
+  await page.getByLabel('Laagdikte').fill('30');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  await expect(page.getByRole('alert')).toContainText('buiten de richtlijnen van de fabrikant');
+  await expect(page.getByRole('alert')).toContainText('5–25 mm');
+  await expect(page.getByTestId('area-calculation-result')).toContainText('264 kg');
+});
+
+test('area mode is disabled when a Market Variant has no Reference Thickness', async ({ page }) => {
+  await page.goto('/product/knauf-mixem-light-be');
+
+  const areaMode = page.getByRole('button', { name: 'Oppervlakte bedekken' });
+  await expect(areaMode).toBeDisabled();
+  await expect(page.getByText(/niet beschikbaar.*Reference Thickness/i)).toBeVisible();
+  await expect(page.getByLabel('Poedermassa')).toBeVisible();
+});
+
 test('catalog discovery searches, filters, and hides unreviewed Market Variants', async ({ page }) => {
   await page.goto('/');
 
   const search = page.getByLabel('Zoek op naam, fabrikant, productcode of categorie');
   const manufacturerFilter = page.getByLabel('Filter op fabrikant');
 
-  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(1);
+  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(2);
   await expect(manufacturerFilter).toBeVisible();
   await expect(manufacturerFilter).toHaveValue('');
 
   await search.fill('  knauf belgium  ');
-  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(1);
+  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(2);
 
   await search.fill('P252');
   await expect(page.getByText('Geen Market Variants gevonden.')).toBeVisible();

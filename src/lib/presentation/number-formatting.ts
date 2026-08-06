@@ -4,7 +4,7 @@ function marketLocale(market: MarketVariant['market']): string {
   return market === 'BE' ? 'nl-BE' : 'en-GB';
 }
 
-export function parseMetricInput(value: string): number | null {
+function parseNumericInput(value: string): number | null {
   const normalized = value.trim().replace(',', '.');
 
   if (!/^\+?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) {
@@ -12,7 +12,16 @@ export function parseMetricInput(value: string): number | null {
   }
 
   const parsed = Number(normalized);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+export function parseMetricInput(value: string): number | null {
+  const parsed = parseNumericInput(value);
+  return parsed !== null && parsed > 0 ? parsed : null;
+}
+
+export function parseNonNegativeMetricInput(value: string): number | null {
+  return parseNumericInput(value);
 }
 
 export function formatEnteredPowderMass(value: string, market: MarketVariant['market']): string {
@@ -29,6 +38,19 @@ export function formatEnteredPowderMass(value: string, market: MarketVariant['ma
     .find((part) => part.type === 'decimal')?.value ?? '.';
 
   return `${integer}${decimalSeparator}${fractionPart}`;
+}
+
+export function formatMetricNumber(value: number, market: MarketVariant['market']): string {
+  return new Intl.NumberFormat(marketLocale(market), {
+    maximumSignificantDigits: 15
+  }).format(value);
+}
+
+export function formatPowderQuantity(
+  powderMassKg: number,
+  market: MarketVariant['market']
+): string {
+  return `${formatMetricNumber(powderMassKg, market)} kg`;
 }
 
 export function formatLiquidQuantity(liquidLitres: number, market: MarketVariant['market']): string {

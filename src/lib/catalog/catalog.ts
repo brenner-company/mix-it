@@ -88,10 +88,12 @@ export const marketVariantSchema = z
       packageLabel: z.string().trim().min(1)
     }),
     mixingRatio: mixingRatioSchema,
-    referenceConsumption: z.object({
-      powderKgPerSquareMetre: z.number().positive(),
-      referenceThicknessMm: z.number().positive()
-    }),
+    referenceConsumption: z
+      .object({
+        powderKgPerSquareMetre: z.number().positive(),
+        referenceThicknessMm: z.number().positive().optional()
+      })
+      .optional(),
     supportedThicknessRange: z
       .object({
         minMm: z.number().positive(),

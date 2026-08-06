@@ -7,7 +7,7 @@ import { publishedCatalog } from './published';
 describe('catalog validation and publication', () => {
   it('accepts a valid candidate with a Product Family, source metadata, translations, and review metadata', () => {
     expect(() => validateCatalog(candidateCatalog)).not.toThrow();
-    expect(publishedCatalog).toHaveLength(1);
+    expect(publishedCatalog).toHaveLength(2);
     expect(publishedCatalog[0]).toMatchObject({
       productFamilyId: 'knauf-goldband-e',
       sourceDocument: { version: '01/2025' },
@@ -36,7 +36,28 @@ describe('catalog validation and publication', () => {
 
     const published = getPublishedCatalog(pending);
 
-    expect(published).toHaveLength(0);
+    expect(published).toHaveLength(1);
+    expect(published.some((variant) => variant.id === pending.variants[0].id)).toBe(false);
     expect(catalogSchema.safeParse(pending).success).toBe(true);
+  });
+
+  it('accepts a reviewed Market Variant without Reference Consumption for powder mode', () => {
+    const withoutAreaData = structuredClone(candidateCatalog);
+    Reflect.deleteProperty(withoutAreaData.variants[0], 'referenceConsumption');
+
+    const published = getPublishedCatalog(withoutAreaData);
+
+    expect(published).toHaveLength(2);
+    expect(published.find((variant) => variant.id === candidateCatalog.variants[0].id)?.referenceConsumption).toBeUndefined();
+
+    const withoutReferenceThickness = structuredClone(candidateCatalog);
+    if (withoutReferenceThickness.variants[0].referenceConsumption) {
+      Reflect.deleteProperty(
+        withoutReferenceThickness.variants[0].referenceConsumption,
+        'referenceThicknessMm'
+      );
+    }
+
+    expect(catalogSchema.safeParse(withoutReferenceThickness).success).toBe(true);
   });
 });

@@ -9,7 +9,7 @@ describe('catalog search', () => {
     const published = getPublishedCatalog(candidateCatalog);
 
     expect(searchPublishedCatalog(published, '  GOLDband  ', 'BE')).toHaveLength(1);
-    expect(searchPublishedCatalog(published, '  knauf belgium ', 'BE')).toHaveLength(1);
+    expect(searchPublishedCatalog(published, '  knauf belgium ', 'BE')).toHaveLength(2);
     expect(searchPublishedCatalog(published, '  p131  ', 'BE')).toHaveLength(1);
     expect(searchPublishedCatalog(published, '  gipspleister  ', 'BE')).toHaveLength(1);
     expect(searchPublishedCatalog(published, 'P252', 'BE')).toHaveLength(0);

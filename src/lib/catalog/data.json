@@ -58,6 +58,61 @@
       "catalogDataVersion": "2025.02.03"
     },
     {
+      "id": "knauf-mixem-light-be",
+      "productFamilyId": "knauf-mixem-light",
+      "manufacturer": "Knauf Belgium",
+      "market": "BE",
+      "name": "Knauf MiXem Light",
+      "productCode": "P257",
+      "category": "Verlicht kalkcementpleister",
+      "aliases": ["MiXem Light", "licht pleister"],
+      "packaging": {
+        "powderKg": 25,
+        "packageLabel": "Zak van 25 kg"
+      },
+      "mixingRatio": {
+        "powderKg": 25,
+        "liquidLitres": 6.7
+      },
+      "referenceConsumption": {
+        "powderKgPerSquareMetre": 18.3
+      },
+      "supportedThicknessRange": {
+        "minMm": 10,
+        "maxMm": 30
+      },
+      "translations": {
+        "nl": {
+          "name": "Knauf MiXem Light",
+          "category": "Verlicht kalkcementpleister",
+          "mixingInstructions": "Strooi een zak van 25 kg in ongeveer 6,7 liter zuiver leidingwater en meng mechanisch tot een homogene massa.",
+          "mixingTime": "Tot een homogene massa",
+          "workingTime": "Droogtijd: minstens 1 dag per mm laagdikte",
+          "disclaimer": "Dit is een berekening op basis van de ingevoerde poedermassa. Controleer altijd de technische fiche en volg de voorschriften van de fabrikant."
+        },
+        "en": {
+          "name": "Knauf MiXem Light",
+          "category": "Lightweight lime-cement plaster",
+          "mixingInstructions": "Add one 25 kg bag to approximately 6.7 litres of clean tap water and mix mechanically until homogeneous.",
+          "mixingTime": "Until homogeneous",
+          "workingTime": "Drying time: at least 1 day per mm of thickness",
+          "disclaimer": "This is an estimate based on the powder mass entered. Always check the technical sheet and follow the manufacturer’s instructions."
+        }
+      },
+      "sourceDocument": {
+        "id": "knauf-p257-mixem-light-nl-0724",
+        "fileName": "MiXem Light_TECH-PROD_P257_NL.pdf",
+        "title": "P257 - Knauf MiXem Light",
+        "version": "07/2024",
+        "publicationDate": "2024-07"
+      },
+      "catalogReview": {
+        "status": "complete",
+        "lastReviewed": "2025-02-03"
+      },
+      "catalogDataVersion": "2025.02.03"
+    },
+    {
       "id": "knauf-mixem-basic-be-draft",
       "productFamilyId": "knauf-mixem-basic",
       "manufacturer": "Knauf Belgium",
