@@ -311,32 +311,30 @@
     onMarketChange={changeMarket}
   />
 
-  <div class="breadcrumb"><a href="/">← {copy.backToCatalog}</a></div>
+  <p><a href="/">← {copy.backToCatalog}</a></p>
 
-  <section class="product-heading" aria-labelledby="product-title">
-    <p class="eyebrow">{translation.category} · {variant.market} · {variant.productCode}</p>
+  <header>
+    <p>{translation.category} · {variant.market} · {variant.productCode}</p>
     <h1 id="product-title">{translation.name}</h1>
-    <p class="product-family">{copy.productFamily}: {variant.productFamilyId}</p>
-  </section>
+    <p>{copy.productFamily}: {variant.productFamilyId}</p>
+  </header>
 
-  <section class="calculator card" aria-labelledby="calculator-title">
-    <div class="calculator-intro">
-      <p class="eyebrow">{copy.calculatorEyebrow}</p>
+  <article aria-labelledby="calculator-title">
+    <header>
+      <p>{copy.calculatorEyebrow}</p>
       <h2 id="calculator-title">{copy.calculatorTitle}</h2>
       <p>{copy.calculatorIntro}</p>
-      <p class="field-hint">{copy.quantityFormatHint(formatQuantityExample(market))}</p>
-    </div>
+      <small>{copy.quantityFormatHint(formatQuantityExample(market))}</small>
+    </header>
 
-    <div class="mode-selector" role="group" aria-label={copy.calculatorModeLabel}>
+    <div role="group" aria-label={copy.calculatorModeLabel}>
       <button
         type="button"
-        class={calculatorMode === 'powder' ? 'mode-button mode-active' : 'mode-button'}
         aria-pressed={calculatorMode === 'powder'}
         onclick={() => selectCalculatorMode('powder')}
       >{copy.powderMode}</button>
       <button
         type="button"
-        class={calculatorMode === 'area' ? 'mode-button mode-active' : 'mode-button'}
         aria-pressed={calculatorMode === 'area'}
         disabled={!areaAvailable}
         onclick={() => selectCalculatorMode('area')}
@@ -348,24 +346,21 @@
     {/if}
 
     {#if calculatorMode === 'powder'}
-      <form onsubmit={calculate} novalidate>
-        <label for="powder-mass" class="field-label">{copy.powderLabel}</label>
-        <div class="input-with-unit">
-          <input
-            id="powder-mass"
-            bind:value={powderInput}
-            aria-describedby="powder-hint powder-error"
-            aria-invalid={validationMessage ? 'true' : 'false'}
-            inputmode="decimal"
-            autocomplete="off"
-            type="text"
-            placeholder={language === 'nl' ? '12,5' : '12.5'}
-          />
-          <span aria-hidden="true">kg</span>
-        </div>
-        <p id="powder-hint" class="field-hint">{copy.powderHint}</p>
+      <form onsubmit={calculate} aria-label={copy.calculatorTitle} novalidate>
+        <label for="powder-mass">{copy.powderLabel} <span aria-hidden="true">(kg)</span></label>
+        <input
+          id="powder-mass"
+          bind:value={powderInput}
+          aria-describedby="powder-hint powder-error"
+          aria-invalid={validationMessage ? 'true' : 'false'}
+          inputmode="decimal"
+          autocomplete="off"
+          type="text"
+          placeholder={language === 'nl' ? '12,5' : '12.5'}
+        />
+        <small id="powder-hint">{copy.powderHint}</small>
         {#if validationMessage}
-          <p id="powder-error" class="error-message" role="alert">{validationMessage}</p>
+          <p id="powder-error" role="alert">{validationMessage}</p>
         {/if}
         <button type="submit">{copy.calculate} <span aria-hidden="true">→</span></button>
       </form>
@@ -499,13 +494,11 @@
     {/if}
 
     {#if calculatorMode === 'powder' && liquid !== null}
-      <div class="calculation-result" aria-live="polite" data-testid="calculation-result">
-        <p class="result-label">{copy.resultTitle}</p>
-        <p class="liquid-value">{formatLiquidQuantity(liquid, market)}</p>
-        <p class="result-detail">
-          {copy.enteredPowder}: <strong>{enteredPowderDisplay} kg</strong>
-        </p>
-      </div>
+      <article aria-live="polite" data-testid="calculation-result">
+        <header><p>{copy.resultTitle}</p></header>
+        <p><strong>{formatLiquidQuantity(liquid, market)}</strong></p>
+        <p>{copy.enteredPowder}: <strong>{enteredPowderDisplay} kg</strong></p>
+      </article>
     {:else if calculatorMode === 'area' && areaCalculation !== null}
       <div class="calculation-result area-calculation-result" aria-live="polite" data-testid="area-calculation-result">
         <p class="result-label">{copy.areaResultTitle}</p>
@@ -549,12 +542,12 @@
     {/if}
 
     {#if showGuidance}
-      <div class="guidance">
-        <div class="guidance-block">
-          <h3>{copy.mixingInstructions}</h3>
+      <section aria-labelledby="guidance-title">
+        <header>
+          <h3 id="guidance-title">{copy.mixingInstructions}</h3>
           <p>{translation.mixingInstructions}</p>
-        </div>
-        <dl class="timing-list">
+        </header>
+        <dl>
           <div>
             <dt>{copy.mixingTime}</dt>
             <dd>{translation.mixingTime}</dd>
@@ -572,96 +565,29 @@
             </div>
           {/if}
         </dl>
-      </div>
+      </section>
 
-      <aside class="disclaimer">
+      <aside>
         <h3>{copy.disclaimer}</h3>
         <p>{translation.disclaimer}</p>
       </aside>
     {/if}
-  </section>
+  </article>
 
-  <section class="traceability" aria-labelledby="traceability-title">
-    <div>
-      <p class="eyebrow">{copy.sourceDocument}</p>
+  <section aria-labelledby="traceability-title">
+    <header>
+      <p>{copy.sourceDocument}</p>
       <h2 id="traceability-title">{variant.sourceDocument.title}</h2>
-      <p class="muted">{variant.sourceDocument.fileName} · {variant.sourceDocument.version}</p>
-    </div>
-    <div class="review-badge">
-      <span class="review-dot" aria-hidden="true"></span>
+      <p>{variant.sourceDocument.fileName} · {variant.sourceDocument.version}</p>
+    </header>
+    <aside>
       <p>{copy.reviewNote}</p>
       <strong>{copy.lastReviewed}: {variant.catalogReview.lastReviewed}</strong>
-    </div>
+    </aside>
   </section>
 </main>
 
 <style>
-  .breadcrumb {
-    padding: 2rem 0 1rem;
-  }
-
-  .breadcrumb a {
-    color: var(--pico-muted-color);
-    font-size: 0.86rem;
-    text-decoration: none;
-  }
-
-  .breadcrumb a:hover {
-    color: var(--pico-primary);
-  }
-
-  .product-heading {
-    padding: 1rem 0 2rem;
-  }
-
-  h1,
-  h2,
-  h3,
-  p {
-    margin-top: 0;
-  }
-
-  h1 {
-    max-width: 14ch;
-    margin-bottom: 0.7rem;
-    font-size: clamp(2.8rem, 12vw, 5.5rem);
-    line-height: 0.94;
-    letter-spacing: -0.08em;
-  }
-
-  .product-family {
-    margin-bottom: 0;
-    color: var(--pico-muted-color);
-  }
-
-  .calculator {
-    display: grid;
-    gap: 2rem;
-    padding: 1.2rem;
-  }
-
-  .calculator-intro {
-    padding: 0.6rem;
-  }
-
-  h2 {
-    margin-bottom: 0.7rem;
-    font-size: clamp(1.9rem, 8vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.065em;
-  }
-
-  .calculator-intro p:last-child {
-    max-width: 34rem;
-    margin-bottom: 0;
-    color: var(--pico-muted-color);
-    line-height: 1.55;
-  }
-
-  form {
-    padding: 0.6rem;
-  }
-
   .mode-selector {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -751,49 +677,10 @@
     font-weight: 700;
   }
 
-  button {
-    width: 100%;
-    min-height: 3.3rem;
-    margin-top: 1.3rem;
-    border: 0;
-    border-radius: 0.8rem;
-    color: #fffdf8;
-    background: var(--pico-contrast-background);
-    cursor: pointer;
-    font-weight: 800;
-  }
-
-  button:hover {
-    background: var(--pico-primary-hover-background);
-  }
-
   .calculation-result {
     padding: 1.35rem;
     border-radius: 1.15rem;
     background: var(--pico-card-sectioning-background-color);
-  }
-
-  .result-label {
-    margin-bottom: 0.4rem;
-    color: var(--pico-muted-color);
-    font-size: 0.82rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .liquid-value {
-    margin-bottom: 0.4rem;
-    color: var(--pico-color);
-    font-size: clamp(3rem, 13vw, 5rem);
-    font-weight: 850;
-    letter-spacing: -0.09em;
-    line-height: 0.95;
-  }
-
-  .result-detail {
-    margin-bottom: 0;
-    color: var(--pico-muted-color);
   }
 
   .area-quantities {
@@ -856,38 +743,6 @@
     line-height: 1.5;
   }
 
-  .guidance {
-    display: grid;
-    gap: 1.5rem;
-    padding: 0.6rem;
-  }
-
-  .guidance h3,
-  .disclaimer h3 {
-    margin-bottom: 0.6rem;
-    font-size: 1rem;
-  }
-
-  .guidance p,
-  .disclaimer p {
-    margin-bottom: 0;
-    color: var(--pico-muted-color);
-    line-height: 1.55;
-  }
-
-  .timing-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem;
-    margin: 0;
-  }
-
-  .timing-list div {
-    padding: 0.85rem;
-    border-radius: 0.8rem;
-    background: #f5f0e8;
-  }
-
   dt {
     margin-bottom: 0.3rem;
     color: var(--pico-muted-color);
@@ -902,98 +757,9 @@
     font-weight: 750;
   }
 
-  .disclaimer {
-    padding: 1rem;
-    border-left: 4px solid var(--pico-primary);
-    background: #fff4e7;
-  }
-
-  .traceability {
-    display: grid;
-    gap: 1.5rem;
-    padding: 3rem 0;
-  }
-
-  .traceability h2 {
-    margin-bottom: 0.4rem;
-    font-size: 1.5rem;
-  }
-
-  .traceability p:last-child {
-    margin-bottom: 0;
-  }
-
-  .review-badge {
-    display: grid;
-    gap: 0.45rem;
-    align-content: start;
-    padding: 1rem;
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: 1rem;
-    background: rgba(255, 253, 248, 0.6);
-  }
-
-  .review-dot {
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: 50%;
-    background: #368c61;
-  }
-
-  .review-badge p,
-  .review-badge strong {
-    margin: 0;
-    font-size: 0.82rem;
-    line-height: 1.45;
-  }
-
-  .review-badge p {
-    color: var(--pico-muted-color);
-  }
-
   @media (min-width: 44rem) {
-    .product-heading {
-      padding: 2rem 0 3rem;
-    }
-
-    .calculator {
-      grid-template-columns: 0.85fr 1.15fr;
-      gap: 2.5rem;
-      padding: 2rem;
-    }
-
-    .calculator-intro {
-      padding: 0.6rem 0;
-    }
-
-    .calculator > .mode-selector,
-    .calculator > .area-unavailable,
-    .calculator > form {
-      grid-column: 2;
-    }
-
-    form {
-      padding: 0.6rem 0;
-    }
-
     .dimensions-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .calculation-result,
-    .guidance,
-    .disclaimer {
-      grid-column: 1 / -1;
-    }
-
-    .guidance {
-      grid-template-columns: 1.2fr 0.8fr;
-    }
-
-    .traceability {
-      grid-template-columns: 1fr 1fr;
-      align-items: start;
-      padding: 4rem 0;
     }
   }
 </style>

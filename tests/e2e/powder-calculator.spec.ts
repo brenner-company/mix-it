@@ -98,6 +98,21 @@ test('mobile user can calculate liquid for a reviewed Market Variant', async ({ 
   await expect(page.getByText('Laatst gereviewd: 2025-02-03')).toBeVisible();
 });
 
+test('Market Variant powder journey exposes semantic calculator and traceability landmarks', async ({
+  page
+}) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  const calculator = page.getByRole('article', { name: 'Hoeveel vloeistof heb je nodig?' });
+  await expect(calculator).toBeVisible();
+  await expect(calculator.getByRole('group', { name: 'Rekenmodus' })).toBeVisible();
+  await expect(calculator.getByRole('form')).toBeVisible();
+  await calculator.getByLabel('Poedermassa').fill('12,5');
+  await calculator.getByRole('button', { name: /bereken vloeistof/i }).click();
+  await expect(calculator.getByRole('complementary')).toContainText('Let op');
+  await expect(page.getByText('Source Document', { exact: true })).toBeVisible();
+});
+
 test('mobile user can calculate powder and liquid for a direct area', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-be');
 

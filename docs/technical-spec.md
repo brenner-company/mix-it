@@ -62,8 +62,9 @@ service worker precaches the resulting same-origin stylesheet with the rest of t
 application release. No stylesheet is loaded from a CDN. Shared page containment
 and primary navigation follow Blades' semantic `container` and `nav` patterns.
 Catalog discovery uses Blades' semantic `section`, `form`, `grid`, and `article`
-patterns without catalog-specific presentation CSS. Route-specific scoped styles
-may remain while calculator presentation moves to semantic Blades markup.
+patterns without catalog-specific presentation CSS. The Market Variant powder
+journey uses semantic `article`, `form`, `group`, `section`, and `aside` patterns;
+route-specific styles may remain for the area calculator until its migration.
 
 ## Calculation design
 
