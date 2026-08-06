@@ -20,7 +20,7 @@ The totals include all emitted production CSS and JavaScript files in `build`,
 including the service worker. Re-run the same commands after each migration slice
 so dependency and generated-component growth remains visible.
 
-For comparison, the issue #10 foundation build emitted 49,818 CSS bytes and
-433,668 JavaScript bytes. The increase includes Tailwind's generated theme and
+For comparison, the issue #10 foundation build emitted 49,935 CSS bytes and
+433,735 JavaScript bytes. The increase includes Tailwind's generated theme and
 the source-owned Select/Bits UI runtime plus Inter; it is recorded for review
 rather than treated as an arbitrary pass/fail budget.
