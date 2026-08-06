@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { candidateCatalog } from './data';
 import { catalogSchema, findMarketVariant, getPublishedCatalog, validateCatalog } from './catalog';
 import { publishedCatalog } from './published';
+import rawPublishedCatalog from './published-data.json';
 
 describe('catalog validation and publication', () => {
   it('accepts a valid candidate with a Product Family, source metadata, translations, and review metadata', () => {
@@ -31,6 +32,25 @@ describe('catalog validation and publication', () => {
       true
     );
     expect(
+      Object.fromEntries(
+        candidateCatalog.variants.map((variant) => [variant.sourceDocument.fileName, variant.productFamilyId])
+      )
+    ).toMatchObject({
+      'Goldband-TECH-PROD-NL.pdf': 'knauf-goldband-e',
+      'MiXem Basic_TECH-PROD_P252_NL.pdf': 'knauf-mixem-basic',
+      'MiXem Light_TECH-PROD_P257_NL.pdf': 'knauf-mixem-light',
+      'MiXem-SUB_TECH-PROD_P291_NL.pdf': 'knauf-mixem-sub'
+    });
+    expect(publishedCatalog.map((variant) => variant.id)).toEqual(
+      candidateCatalog.variants
+        .filter((variant) => variant.catalogReview.status === 'complete')
+        .map((variant) => variant.id)
+    );
+    expect(rawPublishedCatalog.variants).toHaveLength(publishedCatalog.length);
+    expect(rawPublishedCatalog.variants.every((variant) => variant.catalogReview.status === 'complete')).toBe(
+      true
+    );
+    expect(
       publishedCatalog
         .filter((variant) => variant.market === 'BE')
         .map((variant) => variant.name)
@@ -38,13 +58,17 @@ describe('catalog validation and publication', () => {
   });
 
   it('keeps the unresolved MiXem Sub Catalog Review visible while excluding it from publication', () => {
-    const sub = candidateCatalog.variants.find((variant) => variant.id === 'knauf-mixem-sub-be');
+    const pendingSubVariant = candidateCatalog.variants.find(
+      (variant) => variant.id === 'knauf-mixem-sub-be'
+    );
 
-    expect(sub).toMatchObject({
+    expect(pendingSubVariant).toMatchObject({
       sourceDocument: { fileName: 'MiXem-SUB_TECH-PROD_P291_NL.pdf' },
       catalogReview: { status: 'pending' }
     });
-    expect(sub?.catalogReview.notes).toContainEqual(expect.stringContaining('MiXem Basic'));
+    expect(pendingSubVariant?.catalogReview.notes).toContainEqual(
+      expect.stringContaining('MiXem Basic')
+    );
     expect(publishedCatalog.some((variant) => variant.id === 'knauf-mixem-sub-be')).toBe(false);
   });
 
@@ -78,6 +102,36 @@ describe('catalog validation and publication', () => {
     malformed.variants[1].id = malformed.variants[0].id;
 
     expect(() => validateCatalog(malformed)).toThrow(/Duplicate Market Variant identifier/);
+  });
+
+  it('rejects duplicate product codes within a Market', () => {
+    const malformed = structuredClone(candidateCatalog);
+    malformed.variants[1].market = 'BE';
+    malformed.variants[1].productCode = malformed.variants[0].productCode;
+
+    expect(() => validateCatalog(malformed)).toThrow(/Duplicate product code in BE/);
+  });
+
+  it('rejects duplicate Product Family Market links', () => {
+    const malformed = structuredClone(candidateCatalog);
+    malformed.variants[1].market = 'BE';
+    malformed.variants[1].productFamilyId = malformed.variants[0].productFamilyId;
+
+    expect(() => validateCatalog(malformed)).toThrow(/only one Market Variant for BE/);
+  });
+
+  it('rejects duplicate Source Document identifiers', () => {
+    const malformed = structuredClone(candidateCatalog);
+    malformed.variants[1].sourceDocument.id = malformed.variants[0].sourceDocument.id;
+
+    expect(() => validateCatalog(malformed)).toThrow(/Duplicate Source Document identifier/);
+  });
+
+  it('rejects a Market Variant with a stale catalog data version', () => {
+    const malformed = structuredClone(candidateCatalog);
+    malformed.variants[0].catalogDataVersion = '2025.02.04';
+
+    expect(() => validateCatalog(malformed)).toThrow(/catalog data version must match/);
   });
 
   it('rejects invalid Supported Thickness Range values', () => {

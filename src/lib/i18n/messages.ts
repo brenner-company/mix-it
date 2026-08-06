@@ -78,6 +78,7 @@ export function getMessages(language: Language) {
     mixingInstructions: m.mixing_instructions(undefined, { locale }),
     mixingTime: m.mixing_time(undefined, { locale }),
     workingTime: m.working_time(undefined, { locale }),
+    dryingTime: m.drying_time(undefined, { locale }),
     disclaimer: m.disclaimer(undefined, { locale }),
     lastReviewed: m.last_reviewed(undefined, { locale }),
     backToCatalog: m.back_to_catalog(undefined, { locale }),

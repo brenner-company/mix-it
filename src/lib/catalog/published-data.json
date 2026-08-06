@@ -9,7 +9,11 @@
       "name": "Knauf Goldband E",
       "productCode": "P131",
       "category": "Gipspleister",
-      "aliases": ["Goldband", "binnenpleister", "gipspleister"],
+      "aliases": [
+        "Goldband",
+        "binnenpleister",
+        "gipspleister"
+      ],
       "packaging": {
         "powderKg": 25,
         "packageLabel": "Zak van 25 kg"
@@ -65,7 +69,11 @@
       "name": "Knauf Multi Finish",
       "productCode": "P127",
       "category": "Finishing plaster",
-      "aliases": ["Multi Finish", "finish plaster", "plaster"],
+      "aliases": [
+        "Multi Finish",
+        "finish plaster",
+        "plaster"
+      ],
       "packaging": {
         "powderKg": 25,
         "packageLabel": "25 kg bag"
@@ -121,7 +129,10 @@
       "name": "Knauf MiXem Light",
       "productCode": "P257",
       "category": "Verlicht kalkcementpleister",
-      "aliases": ["MiXem Light", "licht pleister"],
+      "aliases": [
+        "MiXem Light",
+        "licht pleister"
+      ],
       "packaging": {
         "powderKg": 25,
         "packageLabel": "Zak van 25 kg"
@@ -177,7 +188,10 @@
       "name": "Knauf MiXem Basic",
       "productCode": "P252",
       "category": "Kalkcementpleister",
-      "aliases": ["MiXem Basic", "basispleister"],
+      "aliases": [
+        "MiXem Basic",
+        "basispleister"
+      ],
       "packaging": {
         "powderKg": 25,
         "packageLabel": "Zak van 25 kg"
@@ -222,64 +236,6 @@
       "catalogReview": {
         "status": "complete",
         "lastReviewed": "2025-02-04"
-      },
-      "catalogDataVersion": "2025.02.05"
-    },
-    {
-      "id": "knauf-mixem-sub-be",
-      "productFamilyId": "knauf-mixem-sub",
-      "manufacturer": "Knauf Belgium",
-      "market": "BE",
-      "name": "Knauf MiXem Sub",
-      "productCode": "P291",
-      "category": "Cementpleister",
-      "aliases": ["MiXem Sub", "sokkelpleister", "cementpleister"],
-      "packaging": {
-        "powderKg": 25,
-        "packageLabel": "Zak van 25 kg"
-      },
-      "mixingRatio": {
-        "powderKg": 25,
-        "liquidLitres": 4.7
-      },
-      "referenceConsumption": {
-        "powderKgPerSquareMetre": 24.8,
-        "referenceThicknessMm": 15
-      },
-      "supportedThicknessRange": {
-        "minMm": 10,
-        "maxMm": 20
-      },
-      "translations": {
-        "nl": {
-          "name": "Knauf MiXem Sub",
-          "category": "Cementpleister",
-          "mixingInstructions": "De technische fiche vermeldt voor manuele verwerking ongeveer 4,7 liter zuiver leidingwater bij een zak van 25 kg en 3 tot 4 minuten mengen met een mixer.",
-          "mixingTime": "3 tot 4 minuten",
-          "dryingTime": "Minstens 1 dag per mm dikte laten uitharden en volledig laten drogen vóór afwerking",
-          "disclaimer": "Dit kandidaat-record is nog niet gepubliceerd omdat de manuele menginstructie in de technische fiche naar MiXem Basic verwijst."
-        },
-        "en": {
-          "name": "Knauf MiXem Sub",
-          "category": "Cement plaster",
-          "mixingInstructions": "The technical sheet states approximately 4.7 litres of clean tap water for a 25 kg bag and mixing with a mixer for 3 to 4 minutes for manual application.",
-          "mixingTime": "3 to 4 minutes",
-          "dryingTime": "Allow at least 1 day per mm of thickness to cure and dry fully before finishing",
-          "disclaimer": "This candidate record is not published because the technical sheet’s manual mixing instruction refers to MiXem Basic."
-        }
-      },
-      "sourceDocument": {
-        "id": "knauf-p291-mixem-sub-nl-0724",
-        "fileName": "MiXem-SUB_TECH-PROD_P291_NL.pdf",
-        "title": "P291 - Knauf MiXem Sub",
-        "version": "07/2024",
-        "publicationDate": "2024-07"
-      },
-      "catalogReview": {
-        "status": "pending",
-        "notes": [
-          "Resolve the suspected copied reference to MiXem Basic in the manual mixing instructions before Catalog Review can complete."
-        ]
       },
       "catalogDataVersion": "2025.02.05"
     }

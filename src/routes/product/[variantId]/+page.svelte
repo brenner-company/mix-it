@@ -498,10 +498,18 @@
             <dt>{copy.mixingTime}</dt>
             <dd>{translation.mixingTime}</dd>
           </div>
-          <div>
-            <dt>{copy.workingTime}</dt>
-            <dd>{translation.workingTime}</dd>
-          </div>
+          {#if translation.workingTime}
+            <div>
+              <dt>{copy.workingTime}</dt>
+              <dd>{translation.workingTime}</dd>
+            </div>
+          {/if}
+          {#if translation.dryingTime}
+            <div>
+              <dt>{copy.dryingTime}</dt>
+              <dd>{translation.dryingTime}</dd>
+            </div>
+          {/if}
         </dl>
       </div>
 

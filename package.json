@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "npm run test:catalog && npm run compile:i18n && vite build",
+    "build": "npm run publish:catalog && npm run test:catalog && npm run compile:i18n && vite build",
+    "publish:catalog": "node scripts/publish-catalog.mjs",
     "preview": "vite preview",
     "compile:i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --emit-ts-declarations --no-emit-git-ignore --no-emit-prettier-ignore",
     "check": "npm run compile:i18n && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

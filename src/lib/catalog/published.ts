@@ -1,4 +1,4 @@
-import { candidateCatalog } from './data';
+import rawPublishedCatalog from './published-data.json';
 import { getPublishedCatalog } from './catalog';
 
-export const publishedCatalog = getPublishedCatalog(candidateCatalog);
+export const publishedCatalog = getPublishedCatalog(rawPublishedCatalog);
