@@ -17,6 +17,9 @@
     calculateRequiredLiquid
   } from '$lib/calculation/calculation';
   import type { DimensionUnit } from '$lib/calculation/units';
+  import CalculatorModeToggle from '$lib/components/market-variant/CalculatorModeToggle.svelte';
+  import PowderCalculationResult from '$lib/components/market-variant/PowderCalculationResult.svelte';
+  import PowderCalculatorForm from '$lib/components/market-variant/PowderCalculatorForm.svelte';
   import {
     calculateAreaSquareMetresFromDimensions,
     formatEnteredPowderMass,
@@ -36,6 +39,7 @@
     selectLanguage,
     selectMarket
   } from '$lib/preferences';
+  import * as Card from '$lib/components/ui/card/index.js';
 
   let { data }: PageProps = $props();
   const variant = $derived(data.variant);
@@ -319,58 +323,53 @@
     <p class="product-family">{copy.productFamily}: {variant.productFamilyId}</p>
   </section>
 
-  <section class="calculator card" aria-labelledby="calculator-title">
-    <div class="calculator-intro">
+  <section aria-labelledby="calculator-title">
+    <Card.Root
+      class="calculator grid gap-8 p-4 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10 sm:p-8"
+    >
+      <Card.Header class="calculator-intro gap-3 px-0 py-0 sm:py-2.5">
       <p class="eyebrow">{copy.calculatorEyebrow}</p>
-      <h2 id="calculator-title">{copy.calculatorTitle}</h2>
-      <p>{copy.calculatorIntro}</p>
-      <p class="field-hint">{copy.quantityFormatHint(formatQuantityExample(market))}</p>
-    </div>
+      <Card.Title>
+        <h2 id="calculator-title">{copy.calculatorTitle}</h2>
+      </Card.Title>
+      <Card.Description class="max-w-prose leading-relaxed">
+        {copy.calculatorIntro}
+      </Card.Description>
+      <p class="mb-0 text-sm leading-relaxed text-muted-foreground">
+        {copy.quantityFormatHint(formatQuantityExample(market))}
+      </p>
+    </Card.Header>
 
-    <div class="mode-selector" role="group" aria-label={copy.calculatorModeLabel}>
-      <button
-        type="button"
-        class={calculatorMode === 'powder' ? 'mode-button mode-active' : 'mode-button'}
-        aria-pressed={calculatorMode === 'powder'}
-        onclick={() => selectCalculatorMode('powder')}
-      >{copy.powderMode}</button>
-      <button
-        type="button"
-        class={calculatorMode === 'area' ? 'mode-button mode-active' : 'mode-button'}
-        aria-pressed={calculatorMode === 'area'}
-        disabled={!areaAvailable}
-        onclick={() => selectCalculatorMode('area')}
-      >{copy.areaMode}</button>
+    <div class="calculator-mode sm:col-start-2">
+      <CalculatorModeToggle
+        value={calculatorMode}
+        areaAvailable={areaAvailable}
+        label={copy.calculatorModeLabel}
+        powderLabel={copy.powderMode}
+        areaLabel={copy.areaMode}
+        onChange={selectCalculatorMode}
+      />
     </div>
 
     {#if !areaAvailable}
-      <p class="area-unavailable" role="status">{copy.areaUnavailable}</p>
+      <Card.Content class="area-unavailable px-0 py-0 sm:col-start-2" role="status">
+        <p>{copy.areaUnavailable}</p>
+      </Card.Content>
     {/if}
 
     {#if calculatorMode === 'powder'}
-      <form onsubmit={calculate} novalidate>
-        <label for="powder-mass" class="field-label">{copy.powderLabel}</label>
-        <div class="input-with-unit">
-          <input
-            id="powder-mass"
-            bind:value={powderInput}
-            aria-describedby="powder-hint powder-error"
-            aria-invalid={validationMessage ? 'true' : 'false'}
-            inputmode="decimal"
-            autocomplete="off"
-            type="text"
-            placeholder={language === 'nl' ? '12,5' : '12.5'}
-          />
-          <span aria-hidden="true">kg</span>
-        </div>
-        <p id="powder-hint" class="field-hint">{copy.powderHint}</p>
-        {#if validationMessage}
-          <p id="powder-error" class="error-message" role="alert">{validationMessage}</p>
-        {/if}
-        <button type="submit">{copy.calculate} <span aria-hidden="true">→</span></button>
-      </form>
+      <Card.Content class="calculator-panel px-0 py-0 sm:col-start-2">
+        <PowderCalculatorForm
+          bind:powderInput
+          {validationMessage}
+          placeholder={language === 'nl' ? '12,5' : '12.5'}
+          {copy}
+          onSubmit={calculate}
+        />
+      </Card.Content>
     {:else if areaAvailable}
-      <form onsubmit={calculateArea} novalidate>
+      <Card.Content class="calculator-panel px-0 py-0 sm:col-start-2">
+        <form class="legacy-area-form" onsubmit={calculateArea} novalidate>
         <div class="mode-selector area-input-mode-selector" role="group" aria-label={copy.areaInputModeLabel}>
           <button
             type="button"
@@ -495,19 +494,24 @@
           <p id="area-error" class="error-message" role="alert">{areaValidationMessage}</p>
         {/if}
         <button type="submit">{copy.calculateArea} <span aria-hidden="true">→</span></button>
-      </form>
+        </form>
+      </Card.Content>
     {/if}
 
     {#if calculatorMode === 'powder' && liquid !== null}
-      <div class="calculation-result" aria-live="polite" data-testid="calculation-result">
-        <p class="result-label">{copy.resultTitle}</p>
-        <p class="liquid-value">{formatLiquidQuantity(liquid, market)}</p>
-        <p class="result-detail">
-          {copy.enteredPowder}: <strong>{enteredPowderDisplay} kg</strong>
-        </p>
+      <div class="sm:col-span-2">
+        <PowderCalculationResult
+          liquid={formatLiquidQuantity(liquid, market)}
+          enteredPowder={enteredPowderDisplay}
+          {copy}
+        />
       </div>
     {:else if calculatorMode === 'area' && areaCalculation !== null}
-      <div class="calculation-result area-calculation-result" aria-live="polite" data-testid="area-calculation-result">
+      <div
+        class="calculation-result area-calculation-result sm:col-span-2"
+        aria-live="polite"
+        data-testid="area-calculation-result"
+      >
         <p class="result-label">{copy.areaResultTitle}</p>
         <div class="area-quantities">
           <div>
@@ -549,7 +553,7 @@
     {/if}
 
     {#if showGuidance}
-      <div class="guidance">
+      <div class="guidance sm:col-span-2">
         <div class="guidance-block">
           <h3>{copy.mixingInstructions}</h3>
           <p>{translation.mixingInstructions}</p>
@@ -574,11 +578,12 @@
         </dl>
       </div>
 
-      <aside class="disclaimer">
+      <aside class="disclaimer sm:col-span-2">
         <h3>{copy.disclaimer}</h3>
         <p>{translation.disclaimer}</p>
       </aside>
     {/if}
+    </Card.Root>
   </section>
 
   <section class="traceability" aria-labelledby="traceability-title">
@@ -634,16 +639,6 @@
     color: var(--muted-foreground);
   }
 
-  .calculator {
-    display: grid;
-    gap: 2rem;
-    padding: 1.2rem;
-  }
-
-  .calculator-intro {
-    padding: 0.6rem;
-  }
-
   h2 {
     margin-bottom: 0.7rem;
     font-size: clamp(1.9rem, 8vw, 3rem);
@@ -651,14 +646,7 @@
     letter-spacing: -0.065em;
   }
 
-  .calculator-intro p:last-child {
-    max-width: 34rem;
-    margin-bottom: 0;
-    color: var(--muted-foreground);
-    line-height: 1.55;
-  }
-
-  form {
+  .legacy-area-form {
     padding: 0.6rem;
   }
 
@@ -699,13 +687,16 @@
     margin-bottom: 0.35rem;
   }
 
-  .area-unavailable {
-    margin: 0;
-    padding: 0.85rem 1rem;
-    border-left: 4px solid var(--line);
+  :global(.area-unavailable) {
     color: var(--muted-foreground);
     font-size: 0.86rem;
     line-height: 1.5;
+  }
+
+  :global(.area-unavailable) p {
+    margin: 0;
+    border-left: 4px solid var(--line);
+    padding: 0.85rem 1rem;
   }
 
   .dimensions-grid {
@@ -789,11 +780,6 @@
     font-weight: 850;
     letter-spacing: -0.09em;
     line-height: 0.95;
-  }
-
-  .result-detail {
-    margin-bottom: 0;
-    color: var(--muted-foreground);
   }
 
   .area-quantities {
@@ -956,34 +942,12 @@
       padding: 2rem 0 3rem;
     }
 
-    .calculator {
-      grid-template-columns: 0.85fr 1.15fr;
-      gap: 2.5rem;
-      padding: 2rem;
-    }
-
-    .calculator-intro {
-      padding: 0.6rem 0;
-    }
-
-    .calculator > .mode-selector,
-    .calculator > .area-unavailable,
-    .calculator > form {
-      grid-column: 2;
-    }
-
-    form {
+    .legacy-area-form {
       padding: 0.6rem 0;
     }
 
     .dimensions-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .calculation-result,
-    .guidance,
-    .disclaimer {
-      grid-column: 1 / -1;
     }
 
     .guidance {

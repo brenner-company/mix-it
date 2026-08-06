@@ -98,8 +98,8 @@ body {
 }
 
 button,
-input,
-select {
+.legacy-area-form input,
+.legacy-area-form select {
   font: inherit;
 }
 
@@ -130,13 +130,6 @@ a {
   color: var(--muted-foreground);
 }
 
-.card {
-  border: 1px solid rgba(200, 211, 205, 0.9);
-  border-radius: 1.5rem;
-  background: rgba(255, 253, 248, 0.9);
-  box-shadow: var(--shadow);
-}
-
 .field-label {
   display: block;
   margin-bottom: 0.45rem;
@@ -162,8 +155,8 @@ select {
   background: #fff;
 }
 
-input:focus-visible,
-select:focus-visible,
+.legacy-area-form input:focus-visible,
+.legacy-area-form select:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
