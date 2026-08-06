@@ -3,6 +3,7 @@
   import type { calculateAreaRequirements } from '$lib/calculation/calculation';
   import { formatLiquidQuantity, formatMetricNumber, formatPowderQuantity } from '$lib/presentation/number-formatting';
   import * as Alert from '$lib/components/ui/alert/index.js';
+  import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import { Separator } from '$lib/components/ui/separator/index.js';
   import type { Messages } from '$lib/i18n/messages';
@@ -18,6 +19,7 @@
     | 'areaAssumptionWasteMargin'
     | 'outsideGuidanceTitle'
     | 'outsideGuidance'
+    | 'calculatedEstimate'
   >;
 
   type Props = {
@@ -31,16 +33,18 @@
 </script>
 
 <Card.Root
-  class="border-primary/20 bg-primary/10"
   aria-live="polite"
   data-testid="area-calculation-result"
 >
   <Card.Header class="gap-2">
-    <Card.Title>
-      <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-        {copy.areaResultTitle}
-      </h3>
-    </Card.Title>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <Card.Title>
+        <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          {copy.areaResultTitle}
+        </h3>
+      </Card.Title>
+      <Badge variant="secondary">{copy.calculatedEstimate}</Badge>
+    </div>
   </Card.Header>
   <Card.Content class="grid gap-4">
     <div class="grid gap-4 sm:grid-cols-2">
@@ -80,7 +84,7 @@
     </dl>
 
     {#if calculation.outsideSupportedThicknessRange}
-      <Alert.Root variant="destructive" class="bg-destructive/5">
+      <Alert.Root variant="destructive">
         <Alert.AlertTitle>{copy.outsideGuidanceTitle}</Alert.AlertTitle>
         <Alert.AlertDescription>
           {copy.outsideGuidance(

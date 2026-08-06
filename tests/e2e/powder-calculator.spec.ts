@@ -16,6 +16,11 @@ function preferenceTrigger(page: Page, label: string) {
   return page.getByRole('button', { name: label });
 }
 
+async function expectReviewDate(page: Page, date: string): Promise<void> {
+  await expect(page.getByText('Laatst gereviewd', { exact: true })).toBeVisible();
+  await expect(page.getByText(date, { exact: true })).toBeVisible();
+}
+
 test('production output exposes installable metadata and a complete release cache', async ({ page }) => {
   const manifestResponse = await page.request.get('/manifest.webmanifest');
   expect(manifestResponse.ok()).toBe(true);
@@ -91,6 +96,20 @@ test('stable Market Variant powder state passes an automated accessibility scan'
 
   const accessibilityScan = await new AxeBuilder({ page })
     .include('section[aria-labelledby="calculator-title"]')
+    .analyze();
+
+  expect(accessibilityScan.violations).toEqual([]);
+});
+
+test('stable Market Variant guidance and Catalog Review state passes an automated accessibility scan', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByLabel('Poedermassa').fill('12,5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+
+  const accessibilityScan = await new AxeBuilder({ page })
+    .include(
+      'section[aria-labelledby="manufacturer-guidance-title"], section[aria-labelledby="traceability-title"]'
+    )
     .analyze();
 
   expect(accessibilityScan.violations).toEqual([]);
@@ -182,7 +201,31 @@ test('mobile user can calculate liquid for a reviewed Market Variant', async ({ 
   await expect(page.getByText('Enkele minuten', { exact: true })).toBeVisible();
   await expect(page.getByText('Ongeveer 2,5 tot 3 uur')).toBeVisible();
   await expect(page.getByText('Dit is een berekening op basis van de ingevoerde poedermassa.')).toBeVisible();
-  await expect(page.getByText('Laatst gereviewd: 2025-02-03')).toBeVisible();
+  await expectReviewDate(page, '2025-02-03');
+});
+
+test('calculated estimates and manufacturer guidance expose packaging and Catalog Review traceability', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByLabel('Poedermassa').fill('12,5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+
+  await expect(page.getByTestId('calculation-result')).toContainText('Berekende schatting');
+  await expect(page.getByText('Richtlijnen van de fabrikant', { exact: true })).toBeVisible();
+  await expect(page.getByText('Verpakking', { exact: true })).toBeVisible();
+  await expect(page.getByText('Zak van 25 kg', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'P131 - Knauf Goldband E' })).toBeVisible();
+  await expect(page.getByText('Catalog Review', { exact: true })).toBeVisible();
+  await expect(page.getByText('Voltooid', { exact: true })).toBeVisible();
+  await expectReviewDate(page, '2025-02-03');
+});
+
+test('missing manufacturer facts retain a localized fallback', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByLabel('Poedermassa').fill('12,5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+
+  await expect(page.getByText('Droog- en uithardingstijd', { exact: true })).toBeVisible();
+  await expect(page.getByText('Niet vermeld in het Source Document.', { exact: true })).toBeVisible();
 });
 
 test('powder calculator exposes one selected mode and preserves its result through a reload', async ({ page }) => {
@@ -512,8 +555,17 @@ test('area mode warns when layer thickness is outside manufacturer guidance', as
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
   await expect(page.getByRole('alert')).toContainText('buiten de richtlijnen van de fabrikant');
+  await expect(
+    page.getByRole('alert').getByText('Buiten de richtlijnen van de fabrikant', { exact: true })
+  ).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('5–25 mm');
   await expect(page.getByTestId('area-calculation-result')).toContainText('264 kg');
+
+  const accessibilityScan = await new AxeBuilder({ page })
+    .include('[data-testid="area-calculation-result"]')
+    .analyze();
+
+  expect(accessibilityScan.violations).toEqual([]);
 });
 
 test('reviewed initial Market Variants expose calculator modes justified by their Source Documents', async ({ page }) => {
@@ -532,7 +584,7 @@ test('reviewed initial Market Variants expose calculator modes justified by thei
   await expect(page.getByText('Strooi een zak van 25 kg in ongeveer 6,7 liter')).toBeVisible();
   await expect(page.getByText('Niet vermeld in de technische fiche.')).toBeVisible();
   await expect(page.getByText('Minstens 1 dag per mm laagdikte vóór afwerking')).toBeVisible();
-  await expect(page.getByText('Laatst gereviewd: 2025-02-03')).toBeVisible();
+  await expectReviewDate(page, '2025-02-03');
 });
 
 test('MiXem Basic exposes reviewed powder and area calculations with source timings', async ({ page }) => {
@@ -545,7 +597,7 @@ test('MiXem Basic exposes reviewed powder and area calculations with source timi
   await expect(page.getByText('3 tot 4 minuten', { exact: true })).toBeVisible();
   await expect(page.getByText('Niet vermeld in de technische fiche.')).toBeVisible();
   await expect(page.getByText('Minstens 1 dag per mm pleisterdikte vóór afwerking')).toBeVisible();
-  await expect(page.getByText('Laatst gereviewd: 2025-02-04')).toBeVisible();
+  await expectReviewDate(page, '2025-02-04');
 
   await page.getByRole('radio', { name: 'Oppervlakte bedekken' }).click();
   await expect(page.getByLabel('Laagdikte')).toHaveValue('15');

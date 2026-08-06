@@ -46,13 +46,9 @@
   text-rendering: optimizeLegibility;
   --ink: #102a2c;
   --muted: oklch(0.97 0 0);
-  --paper: #fffdf8;
-  --legacy-accent: #e7693e;
   --accent: oklch(0.97 0 0);
   --accent-dark: #bd4728;
   --mint: #d7eee5;
-  --line: #c8d3cd;
-  --shadow: 0 20px 48px rgba(16, 42, 44, 0.1);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -65,7 +61,7 @@
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted-foreground: oklch(0.556 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.5 0.18 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);

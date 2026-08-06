@@ -20,7 +20,9 @@
   import AreaCalculationResult from '$lib/components/market-variant/AreaCalculationResult.svelte';
   import AreaCalculatorForm from '$lib/components/market-variant/AreaCalculatorForm.svelte';
   import type { AreaInputError } from '$lib/components/market-variant/AreaCalculatorForm.svelte';
+  import CatalogReviewTraceability from '$lib/components/market-variant/CatalogReviewTraceability.svelte';
   import CalculatorModeToggle from '$lib/components/market-variant/CalculatorModeToggle.svelte';
+  import ManufacturerGuidance from '$lib/components/market-variant/ManufacturerGuidance.svelte';
   import PowderCalculationResult from '$lib/components/market-variant/PowderCalculationResult.svelte';
   import PowderCalculatorForm from '$lib/components/market-variant/PowderCalculatorForm.svelte';
   import {
@@ -40,6 +42,7 @@
     selectLanguage,
     selectMarket
   } from '$lib/preferences';
+  import * as Alert from '$lib/components/ui/alert/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
 
   let { data }: PageProps = $props();
@@ -307,32 +310,41 @@
     onMarketChange={changeMarket}
   />
 
-  <div class="breadcrumb"><a href="/">← {copy.backToCatalog}</a></div>
+  <div class="py-8 pb-4">
+    <a class="text-sm text-muted-foreground no-underline hover:text-foreground" href="/">
+      ← {copy.backToCatalog}
+    </a>
+  </div>
 
-  <section class="product-heading" aria-labelledby="product-title">
+  <section class="py-4 pb-8 sm:py-8 sm:pb-12" aria-labelledby="product-title">
     <p class="eyebrow">{translation.category} · {variant.market} · {variant.productCode}</p>
-    <h1 id="product-title">{translation.name}</h1>
-    <p class="product-family">{copy.productFamily}: {variant.productFamilyId}</p>
+    <h1
+      id="product-title"
+      class="mb-3 max-w-[14ch] text-[clamp(2.8rem,12vw,5.5rem)] leading-[0.94] tracking-[-0.08em]"
+    >{translation.name}</h1>
+    <p class="product-family mb-0 text-muted-foreground">
+      {copy.productFamily}: {variant.productFamilyId}
+    </p>
   </section>
 
   <section aria-labelledby="calculator-title">
     <Card.Root
-      class="calculator grid gap-8 p-4 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10 sm:p-8"
+      class="grid gap-8 p-4 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10 sm:p-8"
     >
-      <Card.Header class="calculator-intro gap-3 px-0 py-0 sm:py-2.5">
-      <p class="eyebrow">{copy.calculatorEyebrow}</p>
-      <Card.Title>
-        <h2 id="calculator-title">{copy.calculatorTitle}</h2>
-      </Card.Title>
-      <Card.Description class="max-w-prose leading-relaxed">
-        {copy.calculatorIntro}
-      </Card.Description>
-      <p class="mb-0 text-sm leading-relaxed text-muted-foreground">
-        {copy.quantityFormatHint(formatQuantityExample(market))}
-      </p>
-    </Card.Header>
+      <Card.Header class="gap-3 px-0 py-0 sm:py-2.5">
+        <p class="eyebrow">{copy.calculatorEyebrow}</p>
+        <Card.Title>
+          <h2 id="calculator-title" class="mb-0 text-3xl tracking-tight">{copy.calculatorTitle}</h2>
+        </Card.Title>
+        <Card.Description class="max-w-prose leading-relaxed">
+          {copy.calculatorIntro}
+        </Card.Description>
+        <p class="mb-0 text-sm leading-relaxed text-muted-foreground">
+          {copy.quantityFormatHint(formatQuantityExample(market))}
+        </p>
+      </Card.Header>
 
-    <div class="calculator-mode sm:col-start-2">
+    <div class="sm:col-start-2">
       <CalculatorModeToggle
         value={calculatorMode}
         areaAvailable={areaAvailable}
@@ -344,13 +356,16 @@
     </div>
 
     {#if !areaAvailable}
-      <Card.Content class="area-unavailable px-0 py-0 sm:col-start-2" role="status">
-        <p>{copy.areaUnavailable}</p>
+      <Card.Content class="px-0 py-0 sm:col-start-2" role="status">
+        <Alert.Root variant="default" role="status">
+          <Alert.AlertTitle>{copy.areaMode}</Alert.AlertTitle>
+          <Alert.AlertDescription>{copy.areaUnavailable}</Alert.AlertDescription>
+        </Alert.Root>
       </Card.Content>
     {/if}
 
     {#if calculatorMode === 'powder'}
-      <Card.Content class="calculator-panel px-0 py-0 sm:col-start-2">
+      <Card.Content class="px-0 py-0 sm:col-start-2">
         <PowderCalculatorForm
           bind:powderInput
           {validationMessage}
@@ -360,7 +375,7 @@
         />
       </Card.Content>
     {:else if areaAvailable}
-      <Card.Content class="calculator-panel px-0 py-0 sm:col-start-2">
+      <Card.Content class="px-0 py-0 sm:col-start-2">
         <AreaCalculatorForm
           bind:areaInput
           bind:widthInput
@@ -407,219 +422,14 @@
     {/if}
 
     {#if showGuidance}
-      <div class="guidance sm:col-span-2">
-        <div class="guidance-block">
-          <h3>{copy.mixingInstructions}</h3>
-          <p>{translation.mixingInstructions}</p>
-        </div>
-        <dl class="timing-list">
-          <div>
-            <dt>{copy.mixingTime}</dt>
-            <dd>{translation.mixingTime}</dd>
-          </div>
-          {#if translation.workingTime}
-            <div>
-              <dt>{copy.workingTime}</dt>
-              <dd>{translation.workingTime}</dd>
-            </div>
-          {/if}
-          {#if translation.dryingTime}
-            <div>
-              <dt>{copy.dryingTime}</dt>
-              <dd>{translation.dryingTime}</dd>
-            </div>
-          {/if}
-        </dl>
-      </div>
-
-      <aside class="disclaimer sm:col-span-2">
-        <h3>{copy.disclaimer}</h3>
-        <p>{translation.disclaimer}</p>
-      </aside>
+      <ManufacturerGuidance
+        {translation}
+        packagingLabel={variant.packaging.packageLabel}
+        {copy}
+      />
     {/if}
     </Card.Root>
   </section>
 
-  <section class="traceability" aria-labelledby="traceability-title">
-    <div>
-      <p class="eyebrow">{copy.sourceDocument}</p>
-      <h2 id="traceability-title">{variant.sourceDocument.title}</h2>
-      <p class="muted">{variant.sourceDocument.fileName} · {variant.sourceDocument.version}</p>
-    </div>
-    <div class="review-badge">
-      <span class="review-dot" aria-hidden="true"></span>
-      <p>{copy.reviewNote}</p>
-      <strong>{copy.lastReviewed}: {variant.catalogReview.lastReviewed}</strong>
-    </div>
-  </section>
+  <CatalogReviewTraceability {variant} {copy} />
 </main>
-
-<style>
-  .breadcrumb {
-    padding: 2rem 0 1rem;
-  }
-
-  .breadcrumb a {
-    color: var(--muted-foreground);
-    font-size: 0.86rem;
-    text-decoration: none;
-  }
-
-  .breadcrumb a:hover {
-    color: var(--accent-dark);
-  }
-
-  .product-heading {
-    padding: 1rem 0 2rem;
-  }
-
-  h1,
-  h2,
-  h3,
-  p {
-    margin-top: 0;
-  }
-
-  h1 {
-    max-width: 14ch;
-    margin-bottom: 0.7rem;
-    font-size: clamp(2.8rem, 12vw, 5.5rem);
-    line-height: 0.94;
-    letter-spacing: -0.08em;
-  }
-
-  .product-family {
-    margin-bottom: 0;
-    color: var(--muted-foreground);
-  }
-
-  h2 {
-    margin-bottom: 0.7rem;
-    font-size: clamp(1.9rem, 8vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.065em;
-  }
-
-  :global(.area-unavailable) {
-    color: var(--muted-foreground);
-    font-size: 0.86rem;
-    line-height: 1.5;
-  }
-
-  :global(.area-unavailable) p {
-    margin: 0;
-    border-left: 4px solid var(--line);
-    padding: 0.85rem 1rem;
-  }
-
-  .guidance {
-    display: grid;
-    gap: 1.5rem;
-    padding: 0.6rem;
-  }
-
-  .guidance h3,
-  .disclaimer h3 {
-    margin-bottom: 0.6rem;
-    font-size: 1rem;
-  }
-
-  .guidance p,
-  .disclaimer p {
-    margin-bottom: 0;
-    color: var(--muted-foreground);
-    line-height: 1.55;
-  }
-
-  .timing-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem;
-    margin: 0;
-  }
-
-  .timing-list div {
-    padding: 0.85rem;
-    border-radius: 0.8rem;
-    background: #f5f0e8;
-  }
-
-  dt {
-    margin-bottom: 0.3rem;
-    color: var(--muted-foreground);
-    font-size: 0.74rem;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  dd {
-    margin: 0;
-    font-size: 0.9rem;
-    font-weight: 750;
-  }
-
-  .disclaimer {
-    padding: 1rem;
-    border-left: 4px solid var(--legacy-accent);
-    background: #fff4e7;
-  }
-
-  .traceability {
-    display: grid;
-    gap: 1.5rem;
-    padding: 3rem 0;
-  }
-
-  .traceability h2 {
-    margin-bottom: 0.4rem;
-    font-size: 1.5rem;
-  }
-
-  .traceability p:last-child {
-    margin-bottom: 0;
-  }
-
-  .review-badge {
-    display: grid;
-    gap: 0.45rem;
-    align-content: start;
-    padding: 1rem;
-    border: 1px solid var(--line);
-    border-radius: 1rem;
-    background: rgba(255, 253, 248, 0.6);
-  }
-
-  .review-dot {
-    width: 0.7rem;
-    height: 0.7rem;
-    border-radius: 50%;
-    background: #368c61;
-  }
-
-  .review-badge p,
-  .review-badge strong {
-    margin: 0;
-    font-size: 0.82rem;
-    line-height: 1.45;
-  }
-
-  .review-badge p {
-    color: var(--muted-foreground);
-  }
-
-  @media (min-width: 44rem) {
-    .product-heading {
-      padding: 2rem 0 3rem;
-    }
-
-    .guidance {
-      grid-template-columns: 1.2fr 0.8fr;
-    }
-
-    .traceability {
-      grid-template-columns: 1fr 1fr;
-      align-items: start;
-      padding: 4rem 0;
-    }
-  }
-</style>

@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import type { Messages } from '$lib/i18n/messages';
 
-  type Copy = Pick<Messages, 'resultTitle' | 'enteredPowder'>;
+  type Copy = Pick<Messages, 'resultTitle' | 'enteredPowder' | 'calculatedEstimate'>;
 
   type Props = {
     liquid: string;
@@ -14,16 +15,19 @@
 </script>
 
 <Card.Root
-  class="calculation-result border-primary/20 bg-primary/10"
+  class="calculation-result"
   aria-live="polite"
   data-testid="calculation-result"
 >
   <Card.Header class="gap-2">
-    <Card.Title>
-      <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-        {copy.resultTitle}
-      </h3>
-    </Card.Title>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <Card.Title>
+        <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          {copy.resultTitle}
+        </h3>
+      </Card.Title>
+      <Badge variant="secondary">{copy.calculatedEstimate}</Badge>
+    </div>
   </Card.Header>
   <Card.Content class="grid gap-2">
     <p class="liquid-value text-5xl font-extrabold tracking-[-0.09em] text-foreground sm:text-6xl">
