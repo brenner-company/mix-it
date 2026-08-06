@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install browser engines
+        run: npx playwright install --with-deps
+
+      - name: Typecheck Svelte application
+        run: npm run check
+
+      - name: Validate and publish reviewed catalog
+        run: npm run test:catalog
+
+      - name: Run numerical and catalog tests
+        run: npm run test
+
+      - name: Build production PWA
+        run: npm run build
+
+      - name: Run Chromium, Firefox, WebKit, and mobile browser tests
+        run: npm run test:e2e

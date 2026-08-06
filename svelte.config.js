@@ -5,6 +5,10 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 const config = {
   preprocess: vitePreprocess(),
   kit: {
+    serviceWorker: {
+      register: true,
+      options: { updateViaCache: 'none' }
+    },
     adapter: adapter({
       fallback: 'index.html'
     })

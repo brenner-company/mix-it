@@ -5,14 +5,20 @@
 
   import { findMarketVariant, supportedMarkets, type Language, type Market } from '$lib/catalog/catalog';
   import { publishedCatalog } from '$lib/catalog/published';
+  import {
+    readCalculatorState,
+    saveCalculatorState,
+    type AreaInputMode,
+    type CalculatorMode
+  } from '$lib/calculator-state';
   import AppTopbar from '$lib/components/AppTopbar.svelte';
   import {
     calculateAreaRequirements,
     calculateRequiredLiquid
   } from '$lib/calculation/calculation';
+  import type { DimensionUnit } from '$lib/calculation/units';
   import {
     calculateAreaSquareMetresFromDimensions,
-    type DimensionUnit,
     formatEnteredPowderMass,
     formatLiquidQuantity,
     formatMetricNumber,
@@ -34,6 +40,14 @@
   let { data }: PageProps = $props();
   const variant = $derived(data.variant);
 
+  function readInitialCalculatorState(): ReturnType<typeof readCalculatorState> {
+    return readCalculatorState(data.variant.id);
+  }
+
+  const savedCalculatorState = readInitialCalculatorState();
+  const restoredPowderInput = savedCalculatorState?.submittedPowderInput ?? '';
+  const restoredPowderMass = parseMetricInput(restoredPowderInput);
+
   onMount(() => {
     const storedMarket = readStoredMarket();
     const browserMarket = hasSupportedMarketRegion(navigator.language)
@@ -53,19 +67,21 @@
 
   let language = $state<Language>(readLanguage());
   const market = $derived<Market>(variant.market);
-  let calculatorMode = $state<'powder' | 'area'>('powder');
-  let areaInputMode = $state<'direct' | 'dimensions'>('direct');
-  let powderInput = $state('');
+  let calculatorMode = $state<CalculatorMode>(savedCalculatorState?.calculatorMode ?? 'powder');
+  let areaInputMode = $state<AreaInputMode>(savedCalculatorState?.areaInputMode ?? 'direct');
+  let powderInput = $state(savedCalculatorState?.powderInput ?? '');
   let validationMessage = $state('');
-  let enteredPowderMass = $state<number | null>(null);
-  let submittedPowderInput = $state('');
-  let areaInput = $state('');
-  let widthInput = $state('');
-  let widthUnit = $state<DimensionUnit>('m');
-  let heightInput = $state('');
-  let heightUnit = $state<DimensionUnit>('m');
-  let thicknessInput = $state<string | undefined>(undefined);
-  let wasteMarginInput = $state('10');
+  let enteredPowderMass = $state<number | null>(restoredPowderMass);
+  let submittedPowderInput = $state(restoredPowderMass === null ? '' : restoredPowderInput);
+  let areaInput = $state(savedCalculatorState?.areaInput ?? '');
+  let widthInput = $state(savedCalculatorState?.widthInput ?? '');
+  let widthUnit = $state<DimensionUnit>(savedCalculatorState?.widthUnit ?? 'm');
+  let heightInput = $state(savedCalculatorState?.heightInput ?? '');
+  let heightUnit = $state<DimensionUnit>(savedCalculatorState?.heightUnit ?? 'm');
+  let thicknessInput = $state<string | undefined>(
+    savedCalculatorState?.thicknessInput || undefined
+  );
+  let wasteMarginInput = $state(savedCalculatorState?.wasteMarginInput ?? '10');
   let areaValidationMessage = $state('');
   let directAreaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
   let dimensionsAreaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
@@ -89,6 +105,24 @@
   const enteredPowderDisplay = $derived(
     submittedPowderInput ? formatEnteredPowderMass(submittedPowderInput, market) : ''
   );
+
+  $effect(() => {
+    saveCalculatorState(data.variant.id, {
+      calculatorMode,
+      areaInputMode,
+      powderInput,
+      submittedPowderInput,
+      areaInput,
+      widthInput,
+      widthUnit,
+      heightInput,
+      heightUnit,
+      thicknessInput: thicknessInput ?? '',
+      wasteMarginInput,
+      directAreaSubmitted: directAreaCalculation !== null,
+      dimensionsAreaSubmitted: dimensionsAreaCalculation !== null
+    });
+  });
 
   function changeLanguage(event: Event): void {
     language = selectLanguage(event);
@@ -163,75 +197,102 @@
     submittedPowderInput = powderInput;
   }
 
+  type AreaInputError = 'area' | 'dimensions' | 'thickness' | 'wasteMargin';
+  type AreaInputValues = {
+    areaSquareMetres: number;
+    thicknessMm: number;
+    wasteMargin: number;
+  };
+
+  function parseAreaInputValues(mode: AreaInputMode):
+    | { values: AreaInputValues }
+    | { error: AreaInputError } {
+    const parsedThickness = parseMetricInput(displayedThickness);
+    if (parsedThickness === null) return { error: 'thickness' };
+
+    const parsedWasteMargin = parseNonNegativeMetricInput(wasteMarginInput);
+    if (parsedWasteMargin === null) return { error: 'wasteMargin' };
+
+    if (mode === 'direct') {
+      const parsedArea = parseMetricInput(areaInput);
+      if (parsedArea === null) return { error: 'area' };
+
+      return {
+        values: {
+          areaSquareMetres: parsedArea,
+          thicknessMm: parsedThickness,
+          wasteMargin: parsedWasteMargin / 100
+        }
+      };
+    }
+
+    const parsedWidth = parseMetricInput(widthInput);
+    const parsedHeight = parseMetricInput(heightInput);
+    if (parsedWidth === null || parsedHeight === null) return { error: 'dimensions' };
+
+    return {
+      values: {
+        areaSquareMetres: calculateAreaSquareMetresFromDimensions({
+          width: parsedWidth,
+          widthUnit,
+          height: parsedHeight,
+          heightUnit
+        }),
+        thicknessMm: parsedThickness,
+        wasteMargin: parsedWasteMargin / 100
+      }
+    };
+  }
+
+  function calculateAreaForMode(mode: AreaInputMode): ReturnType<typeof calculateAreaRequirements> | null {
+    const referenceConsumption = variant.referenceConsumption;
+    if (referenceConsumption?.referenceThicknessMm === undefined) return null;
+
+    const parsed = parseAreaInputValues(mode);
+    if ('error' in parsed) return null;
+
+    return calculateAreaRequirements({
+      ...parsed.values,
+      mixingRatio: variant.mixingRatio,
+      referenceConsumption: {
+        powderKgPerSquareMetre: referenceConsumption.powderKgPerSquareMetre,
+        referenceThicknessMm: referenceConsumption.referenceThicknessMm
+      },
+      supportedThicknessRange: variant.supportedThicknessRange
+    });
+  }
+
   function calculateArea(event: SubmitEvent): void {
     event.preventDefault();
-
-    const referenceConsumption = variant.referenceConsumption;
-    if (referenceConsumption?.referenceThicknessMm === undefined) return;
-    const completeReferenceConsumption = {
-      powderKgPerSquareMetre: referenceConsumption.powderKgPerSquareMetre,
-      referenceThicknessMm: referenceConsumption.referenceThicknessMm
-    };
-
-    const parsedThickness = parseMetricInput(displayedThickness);
-    const parsedWasteMargin = parseNonNegativeMetricInput(wasteMarginInput);
-
-    if (parsedThickness === null) {
+    const parsed = parseAreaInputValues(areaInputMode);
+    if ('error' in parsed) {
       clearActiveAreaCalculation();
-      areaValidationMessage = copy.invalidThickness;
+      areaValidationMessage = {
+        area: copy.invalidArea,
+        dimensions: copy.invalidDimensions,
+        thickness: copy.invalidThickness,
+        wasteMargin: copy.invalidWasteMargin
+      }[parsed.error];
       return;
-    }
-
-    if (parsedWasteMargin === null) {
-      clearActiveAreaCalculation();
-      areaValidationMessage = copy.invalidWasteMargin;
-      return;
-    }
-
-    let areaSquareMetres: number;
-    if (areaInputMode === 'direct') {
-      const parsedArea = parseMetricInput(areaInput);
-
-      if (parsedArea === null) {
-        clearActiveAreaCalculation();
-        areaValidationMessage = copy.invalidArea;
-        return;
-      }
-
-      areaSquareMetres = parsedArea;
-    } else {
-      const parsedWidth = parseMetricInput(widthInput);
-      const parsedHeight = parseMetricInput(heightInput);
-
-      if (parsedWidth === null || parsedHeight === null) {
-        clearActiveAreaCalculation();
-        areaValidationMessage = copy.invalidDimensions;
-        return;
-      }
-
-      areaSquareMetres = calculateAreaSquareMetresFromDimensions({
-        width: parsedWidth,
-        widthUnit,
-        height: parsedHeight,
-        heightUnit
-      });
     }
 
     areaValidationMessage = '';
-    const calculation = calculateAreaRequirements({
-      areaSquareMetres,
-      thicknessMm: parsedThickness,
-      wasteMargin: parsedWasteMargin / 100,
-      mixingRatio: variant.mixingRatio,
-      referenceConsumption: completeReferenceConsumption,
-      supportedThicknessRange: variant.supportedThicknessRange
-    });
+    const calculation = calculateAreaForMode(areaInputMode);
+    if (!calculation) return;
 
     if (areaInputMode === 'direct') {
       directAreaCalculation = calculation;
     } else {
       dimensionsAreaCalculation = calculation;
     }
+  }
+
+  if (savedCalculatorState?.directAreaSubmitted) {
+    directAreaCalculation = calculateAreaForMode('direct');
+  }
+
+  if (savedCalculatorState?.dimensionsAreaSubmitted) {
+    dimensionsAreaCalculation = calculateAreaForMode('dimensions');
   }
 </script>
 

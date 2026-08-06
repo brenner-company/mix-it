@@ -1,6 +1,5 @@
 import type { Market, MarketVariant } from '../catalog/catalog';
-
-export type DimensionUnit = 'm' | 'cm';
+import type { DimensionUnit } from '../calculation/units';
 
 type AreaDimensionsInput = {
   width: number;

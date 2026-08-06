@@ -1,5 +1,57 @@
 import { expect, test } from '@playwright/test';
 
+import { RELEASE_CACHE_PREFIX } from '../../src/lib/offline-release';
+
+test('production output exposes installable metadata and a complete release cache', async ({ page }) => {
+  const manifestResponse = await page.request.get('/manifest.webmanifest');
+  expect(manifestResponse.ok()).toBe(true);
+
+  const manifest = await manifestResponse.json();
+  expect(manifest.display).toBe('standalone');
+  expect(manifest.start_url).toBe('/');
+  expect(manifest.scope).toBe('/');
+  expect(manifest.icons).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ sizes: '192x192', type: 'image/png' }),
+      expect.objectContaining({ sizes: '512x512', type: 'image/png' })
+    ])
+  );
+
+  const iconResponse = await page.request.get('/icons/icon-192.png');
+  expect(iconResponse.ok()).toBe(true);
+
+  await page.goto('/');
+  await expect
+    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+    .toBe(true);
+
+  const release = await page.evaluate(async (cachePrefix) => {
+    const keys = await caches.keys();
+    const mixItCache = keys.find((key) => key.startsWith(cachePrefix));
+    const cachedUrls = mixItCache ? await (await caches.open(mixItCache)).keys() : [];
+
+    return {
+      cacheNames: keys,
+      cachedPaths: cachedUrls.map((request) => new URL(request.url).pathname)
+    };
+  }, RELEASE_CACHE_PREFIX);
+
+  expect(release.cacheNames.filter((key) => key.startsWith(RELEASE_CACHE_PREFIX))).toHaveLength(1);
+  const expectedReleasePaths = [
+    '/',
+    '/product/knauf-goldband-e-be',
+    '/product/knauf-goldband-e-uk',
+    '/product/knauf-mixem-light-be',
+    '/product/knauf-mixem-basic-be',
+    '/manifest.webmanifest',
+    '/icons/icon-192.png',
+    '/icons/icon-512.png'
+  ];
+  expect(release.cachedPaths).toEqual(
+    expect.arrayContaining(expectedReleasePaths)
+  );
+});
+
 test('mobile user can calculate liquid for a reviewed Market Variant', async ({ page }) => {
   await page.goto('/');
 
@@ -133,12 +185,43 @@ test('editing shared area assumptions clears results for both entry modes', asyn
   await expect(result).toHaveCount(0);
 });
 
+test('calculator mode and area inputs persist through a reload', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+
+  await page.reload();
+
+  await expect(page.getByRole('button', { name: 'Oppervlakte bedekken' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(page.getByRole('textbox', { name: 'Oppervlakte', exact: true })).toHaveValue('10');
+  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+});
+
 test('dimension entry fits a touch-sized viewport without horizontal scrolling', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-be');
   await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
   await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
 
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+});
+
+test('keyboard users can submit the powder calculator without pointer interaction', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  const powderInput = page.getByLabel('Poedermassa');
+  const calculate = page.getByRole('button', { name: /bereken vloeistof/i });
+  await powderInput.fill('12,5');
+  await powderInput.focus();
+  await page.keyboard.press('Tab');
+  await expect(calculate).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
 });
 
 test('area mode warns when layer thickness is outside manufacturer guidance', async ({ page }) => {
@@ -287,6 +370,7 @@ test('Market and Language preferences persist across reloads', async ({ page }) 
 test('saved Market preference resolves direct calculator navigation to its Market Variant', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Markt').selectOption('UK');
+  await expect(page.getByLabel('Markt')).toHaveValue('UK');
 
   await page.goto('/product/knauf-goldband-e-be');
 
@@ -309,6 +393,7 @@ test('changing Market clears a previously calculated area result', async ({ page
 test('UK Market accepts comma and point input and formats liquid thresholds', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-uk');
   await page.getByLabel('Taal').selectOption('en');
+  await expect(page.getByLabel('Language')).toHaveValue('en');
 
   const powder = page.getByLabel('Powder mass');
   const calculate = page.getByRole('button', { name: /calculate liquid/i });
@@ -338,21 +423,61 @@ test('UK Market accepts comma and point input and formats liquid thresholds', as
   await expect(page.getByTestId('area-calculation-result')).toContainText('40.5 L');
 });
 
-test('installed catalog and calculator reload offline', async ({ page, context, browserName }) => {
-  test.skip(browserName === 'webkit', 'WebKit reports an internal error reloading offline pages.');
-
+test('installed catalog and calculator work offline', async ({ page, context }) => {
   await page.goto('/product/knauf-goldband-e-be');
+  await page.getByLabel('Poedermassa').fill('12,5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
   await page.evaluate(async () => {
     if ('serviceWorker' in navigator) await navigator.serviceWorker.ready;
   });
 
+  const webkitCatalogPage =
+    test.info().project.name === 'webkit' ? await context.newPage() : null;
+  if (webkitCatalogPage) {
+    await webkitCatalogPage.goto('/');
+    await expect(webkitCatalogPage.getByRole('heading', { name: 'Catalogus' })).toBeVisible();
+  }
+
   await context.setOffline(true);
+
+  if (test.info().project.name === 'webkit') {
+    // WebKit reports an internal navigation error before its service worker can
+    // handle page.reload(), so cover the no-network product journey in-place.
+    await webkitCatalogPage!
+      .getByLabel('Zoek op naam, fabrikant, productcode of categorie')
+      .fill('P252');
+    await expect(webkitCatalogPage!.getByRole('link', { name: /Knauf MiXem Basic/ })).toBeVisible();
+    await page.getByLabel('Poedermassa').fill('12,5');
+    await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+    await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+    await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+    await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
+    await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+    await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+    await expect(page.getByTestId('area-calculation-result')).toContainText('56,3 L');
+    await webkitCatalogPage!.close();
+    return;
+  }
+
   await page.reload();
 
   await expect(page.getByRole('heading', { name: 'Knauf Goldband E', exact: true })).toBeVisible();
+  await expect(page.getByLabel('Poedermassa')).toHaveValue('12,5');
   await page.getByLabel('Poedermassa').fill('12,5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
   await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+
+  await page.goto('/');
+  await page.getByLabel('Zoek op naam, fabrikant, productcode of categorie').fill('P252');
+  await expect(page.getByRole('link', { name: /Knauf MiXem Basic/ })).toBeVisible();
+
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+  await expect(page.getByTestId('area-calculation-result')).toContainText('56,3 L');
 });
 
 test.describe('browser Market defaults', () => {
