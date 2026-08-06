@@ -227,7 +227,9 @@
 
     const parsedWidth = parseMetricInput(widthInput);
     const parsedHeight = parseMetricInput(heightInput);
-    if (parsedWidth === null || parsedHeight === null) return { error: 'dimensions' };
+    if (parsedWidth === null && parsedHeight === null) return { error: 'dimensions' };
+    if (parsedWidth === null) return { error: 'width' };
+    if (parsedHeight === null) return { error: 'height' };
 
     return {
       values: {

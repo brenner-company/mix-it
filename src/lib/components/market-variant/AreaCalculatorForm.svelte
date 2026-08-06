@@ -10,7 +10,13 @@
   import type { Messages } from '$lib/i18n/messages';
   import AreaInputModeToggle from './AreaInputModeToggle.svelte';
 
-  export type AreaInputError = 'area' | 'dimensions' | 'thickness' | 'wasteMargin';
+  export type AreaInputError =
+    | 'area'
+    | 'width'
+    | 'height'
+    | 'dimensions'
+    | 'thickness'
+    | 'wasteMargin';
 
   type Copy = Pick<
     Messages,
@@ -87,6 +93,14 @@
 
   const displayedThickness = $derived(thicknessInput ?? referenceThickness);
 
+  function hasDimensionError(field: 'width' | 'height'): boolean {
+    return validationError === 'dimensions' || validationError === field;
+  }
+
+  const hasDimensionsError = $derived(
+    hasDimensionError('width') || hasDimensionError('height')
+  );
+
   function changeThickness(event: Event): void {
     thicknessInput = (event.currentTarget as HTMLInputElement).value;
     onThicknessInputChange();
@@ -146,17 +160,17 @@
     {:else}
       <Field.FieldSet class="gap-4">
         <Field.FieldLegend class="sr-only">{copy.dimensionsMode}</Field.FieldLegend>
-        <Field.Field data-invalid={validationError === 'dimensions'}>
+        <Field.Field data-invalid={hasDimensionsError}>
           <Field.FieldGroup class="grid gap-5 sm:grid-cols-2">
-            <Field.Field>
+            <Field.Field data-invalid={hasDimensionError('width')}>
               <Field.FieldLabel for="width">{copy.widthLabel}</Field.FieldLabel>
               <div class="flex min-w-0 gap-2">
                 <Input
                   id="width"
                   bind:value={widthInput}
                   oninput={onWidthInputChange}
-                  aria-describedby={validationError === 'dimensions' ? 'dimensions-hint dimensions-error' : 'dimensions-hint'}
-                  aria-invalid={validationError === 'dimensions' ? 'true' : undefined}
+                  aria-describedby={hasDimensionError('width') ? 'dimensions-hint dimensions-error' : 'dimensions-hint'}
+                  aria-invalid={hasDimensionError('width') ? 'true' : undefined}
                   inputmode="decimal"
                   autocomplete="off"
                   type="text"
@@ -187,15 +201,15 @@
               </div>
             </Field.Field>
 
-            <Field.Field>
+            <Field.Field data-invalid={hasDimensionError('height')}>
               <Field.FieldLabel for="height">{copy.heightLabel}</Field.FieldLabel>
               <div class="flex min-w-0 gap-2">
                 <Input
                   id="height"
                   bind:value={heightInput}
                   oninput={onHeightInputChange}
-                  aria-describedby={validationError === 'dimensions' ? 'dimensions-hint dimensions-error' : 'dimensions-hint'}
-                  aria-invalid={validationError === 'dimensions' ? 'true' : undefined}
+                  aria-describedby={hasDimensionError('height') ? 'dimensions-hint dimensions-error' : 'dimensions-hint'}
+                  aria-invalid={hasDimensionError('height') ? 'true' : undefined}
                   inputmode="decimal"
                   autocomplete="off"
                   type="text"
@@ -227,7 +241,7 @@
             </Field.Field>
           </Field.FieldGroup>
           <Field.FieldDescription id="dimensions-hint">{copy.dimensionsHint}</Field.FieldDescription>
-          {#if validationError === 'dimensions'}
+          {#if hasDimensionsError}
             <Field.FieldError id="dimensions-error">{copy.invalidDimensions}</Field.FieldError>
           {/if}
         </Field.Field>
