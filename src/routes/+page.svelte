@@ -1,7 +1,7 @@
 <script lang="ts">
   import { publishedCatalog } from '$lib/catalog/published';
   import type { Language, Market } from '$lib/catalog/catalog';
-  import { searchPublishedCatalog } from '$lib/catalog/search';
+  import { getManufacturers, searchPublishedCatalog } from '$lib/catalog/search';
   import AppTopbar from '$lib/components/AppTopbar.svelte';
   import { getMessages } from '$lib/i18n/messages';
   import { readLanguage, readMarket, selectLanguage, selectMarket } from '$lib/preferences';
@@ -9,9 +9,13 @@
   let language = $state<Language>(readLanguage());
   let market = $state<Market>(readMarket());
   let search = $state('');
+  let manufacturer = $state('');
 
   const copy = $derived(getMessages(language));
-  const visibleVariants = $derived(searchPublishedCatalog(publishedCatalog, search, market));
+  const manufacturers = $derived(getManufacturers(publishedCatalog, market));
+  const visibleVariants = $derived(
+    searchPublishedCatalog(publishedCatalog, search, market, manufacturer)
+  );
 
   function changeLanguage(event: Event): void {
     language = selectLanguage(event);
@@ -55,10 +59,22 @@
       <p class="catalog-count">{copy.marketVariantCount(visibleVariants.length)}</p>
     </div>
 
-    <label class="search-field">
-      <span class="field-label">{copy.searchLabel}</span>
-      <input bind:value={search} type="search" placeholder={copy.searchPlaceholder} />
-    </label>
+    <div class="catalog-controls">
+      <label class="search-field">
+        <span class="field-label">{copy.searchLabel}</span>
+        <input bind:value={search} type="search" placeholder={copy.searchPlaceholder} />
+      </label>
+
+      <label class="manufacturer-filter">
+        <span class="field-label">{copy.manufacturerFilterLabel}</span>
+        <select bind:value={manufacturer}>
+          <option value="">{copy.allManufacturers}</option>
+          {#each manufacturers as manufacturerOption (manufacturerOption)}
+            <option value={manufacturerOption}>{manufacturerOption}</option>
+          {/each}
+        </select>
+      </label>
+    </div>
 
     {#if visibleVariants.length > 0}
       <div class="variant-list">
@@ -162,10 +178,15 @@
     font-size: 0.8rem;
   }
 
-  .search-field {
-    display: block;
-    max-width: 40rem;
+  .catalog-controls {
+    display: grid;
+    gap: 1rem;
     margin-bottom: 1.25rem;
+  }
+
+  .search-field,
+  .manufacturer-filter {
+    display: block;
   }
 
   .variant-list {
@@ -243,6 +264,12 @@
 
     .variant-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .catalog-controls {
+      grid-template-columns: minmax(0, 2fr) minmax(12rem, 1fr);
+      max-width: 58rem;
+      align-items: end;
     }
   }
 </style>

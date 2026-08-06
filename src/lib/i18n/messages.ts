@@ -21,6 +21,8 @@ export function getMessages(language: Language) {
     catalogTitle: m.catalog_title(undefined, { locale }),
     searchLabel: m.search_label(undefined, { locale }),
     searchPlaceholder: m.search_placeholder(undefined, { locale }),
+    manufacturerFilterLabel: m.manufacturer_filter_label(undefined, { locale }),
+    allManufacturers: m.all_manufacturers(undefined, { locale }),
     openCalculator: m.open_calculator(undefined, { locale }),
     productFamily: m.product_family(undefined, { locale }),
     productCode: m.product_code(undefined, { locale }),
