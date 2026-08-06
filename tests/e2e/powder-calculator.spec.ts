@@ -154,13 +154,21 @@ test('area mode warns when layer thickness is outside manufacturer guidance', as
   await expect(page.getByTestId('area-calculation-result')).toContainText('264 kg');
 });
 
-test('area mode is disabled when a Market Variant has no Reference Thickness', async ({ page }) => {
+test('reviewed initial Market Variants expose calculator modes justified by their Source Documents', async ({ page }) => {
   await page.goto('/product/knauf-mixem-light-be');
 
   const areaMode = page.getByRole('button', { name: 'Oppervlakte bedekken' });
-  await expect(areaMode).toBeDisabled();
-  await expect(page.getByText(/niet beschikbaar.*Reference Thickness/i)).toBeVisible();
-  await expect(page.getByLabel('Poedermassa')).toBeVisible();
+  await expect(areaMode).not.toBeDisabled();
+  await areaMode.click();
+  await expect(page.getByLabel('Laagdikte')).toHaveValue('15');
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('1');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  const result = page.getByTestId('area-calculation-result');
+  await expect(result).toContainText('20,13 kg');
+  await expect(result).toContainText('5,4 L');
+  await expect(page.getByText('Strooi een zak van 25 kg in ongeveer 6,7 liter')).toBeVisible();
+  await expect(page.getByText('Laatst gereviewd: 2025-02-03')).toBeVisible();
 });
 
 test('catalog discovery searches, filters, and hides unreviewed Market Variants', async ({ page }) => {
@@ -169,14 +177,17 @@ test('catalog discovery searches, filters, and hides unreviewed Market Variants'
   const search = page.getByLabel('Zoek op naam, fabrikant, productcode of categorie');
   const manufacturerFilter = page.getByLabel('Filter op fabrikant');
 
-  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(2);
+  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(3);
   await expect(manufacturerFilter).toBeVisible();
   await expect(manufacturerFilter).toHaveValue('');
 
   await search.fill('  knauf belgium  ');
-  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(2);
+  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(3);
 
   await search.fill('P252');
+  await expect(page.getByRole('link', { name: /Knauf MiXem Basic/ })).toHaveCount(1);
+
+  await search.fill('P291');
   await expect(page.getByText('Geen Market Variants gevonden.')).toBeVisible();
 
   await search.fill('P131');
@@ -201,10 +212,10 @@ test('invalid powder input is announced without showing a calculation', async ({
 });
 
 test('unreviewed Market Variants cannot be opened by direct navigation', async ({ page }) => {
-  await page.goto('/product/knauf-mixem-basic-be-draft');
+  await page.goto('/product/knauf-mixem-sub-be');
 
   await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Knauf MiXem Basic' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Knauf MiXem Sub' })).toHaveCount(0);
 });
 
 test('Market and Language selections stay independent across a differently named Market Variant', async ({

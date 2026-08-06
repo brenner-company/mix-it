@@ -54,7 +54,8 @@ const sourceDocumentSchema = z.object({
 const catalogReviewSchema = z
   .object({
     status: z.enum(['pending', 'complete']),
-    lastReviewed: isoDate.optional()
+    lastReviewed: isoDate.optional(),
+    notes: z.array(z.string().trim().min(1)).optional()
   })
   .superRefine((review, context) => {
     if (review.status === 'complete' && !review.lastReviewed) {
@@ -140,7 +141,9 @@ export const catalogSchema = z
   })
   .superRefine((catalog, context) => {
     const ids = new Set<string>();
-    const productFamilyIds = new Set<string>();
+    const productFamilyMarketKeys = new Set<string>();
+    const productCodesByMarket = new Set<string>();
+    const sourceDocumentIds = new Set<string>();
 
     catalog.variants.forEach((variant, index) => {
       if (ids.has(variant.id)) {
@@ -151,10 +154,59 @@ export const catalogSchema = z
         });
       }
       ids.add(variant.id);
-      productFamilyIds.add(variant.productFamilyId);
+
+      const productFamilyMarketKey = `${variant.productFamilyId}:${variant.market}`;
+      if (productFamilyMarketKeys.has(productFamilyMarketKey)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['variants', index, 'productFamilyId'],
+          message: `A Product Family can have only one Market Variant for ${variant.market}`
+        });
+      }
+      productFamilyMarketKeys.add(productFamilyMarketKey);
+
+      const productCodeKey = `${variant.market}:${variant.productCode.toLowerCase()}`;
+      if (productCodesByMarket.has(productCodeKey)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['variants', index, 'productCode'],
+          message: `Duplicate product code in ${variant.market}: ${variant.productCode}`
+        });
+      }
+      productCodesByMarket.add(productCodeKey);
+
+      if (sourceDocumentIds.has(variant.sourceDocument.id)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['variants', index, 'sourceDocument', 'id'],
+          message: `Duplicate Source Document identifier: ${variant.sourceDocument.id}`
+        });
+      }
+      sourceDocumentIds.add(variant.sourceDocument.id);
+
+      if (variant.catalogDataVersion !== catalog.dataVersion) {
+        context.addIssue({
+          code: 'custom',
+          path: ['variants', index, 'catalogDataVersion'],
+          message: 'Market Variant catalog data version must match the catalog data version'
+        });
+      }
+
+      const referenceThickness = variant.referenceConsumption?.referenceThicknessMm;
+      if (
+        referenceThickness !== undefined &&
+        (referenceThickness < variant.supportedThicknessRange.minMm ||
+          referenceThickness > variant.supportedThicknessRange.maxMm)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['variants', index, 'referenceConsumption', 'referenceThicknessMm'],
+          message: 'Reference Thickness must fall within the Supported Thickness Range'
+        });
+      }
     });
 
-    if (productFamilyIds.size === 0) {
+    if (productFamilyMarketKeys.size === 0) {
       context.addIssue({
         code: 'custom',
         path: ['variants'],

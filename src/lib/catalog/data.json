@@ -1,5 +1,5 @@
 {
-  "dataVersion": "2025.02.04",
+  "dataVersion": "2025.02.05",
   "variants": [
     {
       "id": "knauf-goldband-e-be",
@@ -55,7 +55,7 @@
         "status": "complete",
         "lastReviewed": "2025-02-03"
       },
-      "catalogDataVersion": "2025.02.04"
+      "catalogDataVersion": "2025.02.05"
     },
     {
       "id": "knauf-goldband-e-uk",
@@ -111,7 +111,7 @@
         "status": "complete",
         "lastReviewed": "2025-02-03"
       },
-      "catalogDataVersion": "2025.02.04"
+      "catalogDataVersion": "2025.02.05"
     },
     {
       "id": "knauf-mixem-light-be",
@@ -131,7 +131,8 @@
         "liquidLitres": 6.7
       },
       "referenceConsumption": {
-        "powderKgPerSquareMetre": 18.3
+        "powderKgPerSquareMetre": 18.3,
+        "referenceThicknessMm": 15
       },
       "supportedThicknessRange": {
         "minMm": 10,
@@ -166,10 +167,10 @@
         "status": "complete",
         "lastReviewed": "2025-02-03"
       },
-      "catalogDataVersion": "2025.02.04"
+      "catalogDataVersion": "2025.02.05"
     },
     {
-      "id": "knauf-mixem-basic-be-draft",
+      "id": "knauf-mixem-basic-be",
       "productFamilyId": "knauf-mixem-basic",
       "manufacturer": "Knauf Belgium",
       "market": "BE",
@@ -200,7 +201,7 @@
           "mixingInstructions": "Voeg ongeveer 4,7 liter zuiver leidingwater toe aan een zak van 25 kg en meng gedurende 3 tot 4 minuten met een mixer.",
           "mixingTime": "3 tot 4 minuten",
           "workingTime": "Volgens de omstandigheden op de werf",
-          "disclaimer": "Dit is een kandidaat-record en is nog niet gepubliceerd in de catalogus."
+          "disclaimer": "Dit is een berekening op basis van de ingevoerde poedermassa. Controleer altijd de technische fiche en volg de voorschriften van de fabrikant."
         },
         "en": {
           "name": "Knauf MiXem Basic",
@@ -208,7 +209,7 @@
           "mixingInstructions": "Add approximately 4.7 litres of clean tap water to a 25 kg bag and mix with a mixer for 3 to 4 minutes.",
           "mixingTime": "3 to 4 minutes",
           "workingTime": "Depending on conditions on site",
-          "disclaimer": "This is a candidate record and has not yet been published in the catalog."
+          "disclaimer": "This is an estimate based on the powder mass entered. Always check the technical sheet and follow the manufacturer’s instructions."
         }
       },
       "sourceDocument": {
@@ -219,9 +220,68 @@
         "publicationDate": "2024-07"
       },
       "catalogReview": {
-        "status": "pending"
+        "status": "complete",
+        "lastReviewed": "2025-02-04"
       },
-      "catalogDataVersion": "2025.02.04"
+      "catalogDataVersion": "2025.02.05"
+    },
+    {
+      "id": "knauf-mixem-sub-be",
+      "productFamilyId": "knauf-mixem-sub",
+      "manufacturer": "Knauf Belgium",
+      "market": "BE",
+      "name": "Knauf MiXem Sub",
+      "productCode": "P291",
+      "category": "Cementpleister",
+      "aliases": ["MiXem Sub", "sokkelpleister", "cementpleister"],
+      "packaging": {
+        "powderKg": 25,
+        "packageLabel": "Zak van 25 kg"
+      },
+      "mixingRatio": {
+        "powderKg": 25,
+        "liquidLitres": 4.7
+      },
+      "referenceConsumption": {
+        "powderKgPerSquareMetre": 24.8,
+        "referenceThicknessMm": 15
+      },
+      "supportedThicknessRange": {
+        "minMm": 10,
+        "maxMm": 20
+      },
+      "translations": {
+        "nl": {
+          "name": "Knauf MiXem Sub",
+          "category": "Cementpleister",
+          "mixingInstructions": "De technische fiche vermeldt voor manuele verwerking ongeveer 4,7 liter zuiver leidingwater bij een zak van 25 kg en 3 tot 4 minuten mengen met een mixer.",
+          "mixingTime": "3 tot 4 minuten",
+          "workingTime": "Minstens 1 dag per mm dikte laten uitharden en volledig laten drogen vóór afwerking",
+          "disclaimer": "Dit kandidaat-record is nog niet gepubliceerd omdat de manuele menginstructie in de technische fiche naar MiXem Basic verwijst."
+        },
+        "en": {
+          "name": "Knauf MiXem Sub",
+          "category": "Cement plaster",
+          "mixingInstructions": "The technical sheet states approximately 4.7 litres of clean tap water for a 25 kg bag and mixing with a mixer for 3 to 4 minutes for manual application.",
+          "mixingTime": "3 to 4 minutes",
+          "workingTime": "Allow at least 1 day per mm of thickness to cure and dry fully before finishing",
+          "disclaimer": "This candidate record is not published because the technical sheet’s manual mixing instruction refers to MiXem Basic."
+        }
+      },
+      "sourceDocument": {
+        "id": "knauf-p291-mixem-sub-nl-0724",
+        "fileName": "MiXem-SUB_TECH-PROD_P291_NL.pdf",
+        "title": "P291 - Knauf MiXem Sub",
+        "version": "07/2024",
+        "publicationDate": "2024-07"
+      },
+      "catalogReview": {
+        "status": "pending",
+        "notes": [
+          "Resolve the suspected copied reference to MiXem Basic in the manual mixing instructions before Catalog Review can complete."
+        ]
+      },
+      "catalogDataVersion": "2025.02.05"
     }
   ]
 }
