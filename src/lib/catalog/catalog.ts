@@ -34,17 +34,9 @@ const translationSchema = z.object({
   category: z.string().trim().min(1),
   mixingInstructions: z.string().trim().min(1),
   mixingTime: z.string().trim().min(1),
-  workingTime: z.string().trim().min(1).optional(),
+  workingTime: z.string().trim().min(1),
   dryingTime: z.string().trim().min(1).optional(),
   disclaimer: z.string().trim().min(1)
-}).superRefine((translation, context) => {
-  if (!translation.workingTime && !translation.dryingTime) {
-    context.addIssue({
-      code: 'custom',
-      path: ['workingTime'],
-      message: 'A translation requires a working-time or drying-time fact'
-    });
-  }
 });
 
 const mixingRatioSchema = z.object({

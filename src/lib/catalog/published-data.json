@@ -155,6 +155,7 @@
           "category": "Verlicht kalkcementpleister",
           "mixingInstructions": "Strooi een zak van 25 kg in ongeveer 6,7 liter zuiver leidingwater en meng mechanisch tot een homogene massa.",
           "mixingTime": "Tot een homogene massa",
+          "workingTime": "Niet vermeld in de technische fiche.",
           "dryingTime": "Minstens 1 dag per mm laagdikte vóór afwerking",
           "disclaimer": "Dit is een berekening op basis van de ingevoerde poedermassa. Controleer altijd de technische fiche en volg de voorschriften van de fabrikant."
         },
@@ -163,6 +164,7 @@
           "category": "Lightweight lime-cement plaster",
           "mixingInstructions": "Add one 25 kg bag to approximately 6.7 litres of clean tap water and mix mechanically until homogeneous.",
           "mixingTime": "Until homogeneous",
+          "workingTime": "Not stated in the technical sheet.",
           "dryingTime": "At least 1 day per mm of thickness before finishing",
           "disclaimer": "This is an estimate based on the powder mass entered. Always check the technical sheet and follow the manufacturer’s instructions."
         }
@@ -214,6 +216,7 @@
           "category": "Kalkcementpleister",
           "mixingInstructions": "Voeg ongeveer 4,7 liter zuiver leidingwater toe aan een zak van 25 kg en meng gedurende 3 tot 4 minuten met een mixer.",
           "mixingTime": "3 tot 4 minuten",
+          "workingTime": "Niet vermeld in de technische fiche.",
           "dryingTime": "Minstens 1 dag per mm pleisterdikte vóór afwerking",
           "disclaimer": "Dit is een berekening op basis van de ingevoerde poedermassa. Controleer altijd de technische fiche en volg de voorschriften van de fabrikant."
         },
@@ -222,6 +225,7 @@
           "category": "Lime-cement plaster",
           "mixingInstructions": "Add approximately 4.7 litres of clean tap water to a 25 kg bag and mix with a mixer for 3 to 4 minutes.",
           "mixingTime": "3 to 4 minutes",
+          "workingTime": "Not stated in the technical sheet.",
           "dryingTime": "At least 1 day per mm of plaster thickness before finishing",
           "disclaimer": "This is an estimate based on the powder mass entered. Always check the technical sheet and follow the manufacturer’s instructions."
         }

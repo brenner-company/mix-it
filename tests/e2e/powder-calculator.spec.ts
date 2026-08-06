@@ -168,6 +168,7 @@ test('reviewed initial Market Variants expose calculator modes justified by thei
   await expect(result).toContainText('20,13 kg');
   await expect(result).toContainText('5,4 L');
   await expect(page.getByText('Strooi een zak van 25 kg in ongeveer 6,7 liter')).toBeVisible();
+  await expect(page.getByText('Niet vermeld in de technische fiche.')).toBeVisible();
   await expect(page.getByText('Minstens 1 dag per mm laagdikte vóór afwerking')).toBeVisible();
   await expect(page.getByText('Laatst gereviewd: 2025-02-03')).toBeVisible();
 });
@@ -180,6 +181,7 @@ test('MiXem Basic exposes reviewed powder and area calculations with source timi
   await expect(page.getByTestId('calculation-result')).toContainText('2.350 ml');
   await expect(page.getByText('Voeg ongeveer 4,7 liter zuiver leidingwater')).toBeVisible();
   await expect(page.getByText('3 tot 4 minuten', { exact: true })).toBeVisible();
+  await expect(page.getByText('Niet vermeld in de technische fiche.')).toBeVisible();
   await expect(page.getByText('Minstens 1 dag per mm pleisterdikte vóór afwerking')).toBeVisible();
   await expect(page.getByText('Laatst gereviewd: 2025-02-04')).toBeVisible();
 
@@ -334,6 +336,23 @@ test('UK Market accepts comma and point input and formats liquid thresholds', as
   await page.getByRole('textbox', { name: 'Area', exact: true }).fill('10.0');
   await page.getByRole('button', { name: /calculate powder and liquid/i }).click();
   await expect(page.getByTestId('area-calculation-result')).toContainText('40.5 L');
+});
+
+test('installed catalog and calculator reload offline', async ({ page, context, browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit reports an internal error reloading offline pages.');
+
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.evaluate(async () => {
+    if ('serviceWorker' in navigator) await navigator.serviceWorker.ready;
+  });
+
+  await context.setOffline(true);
+  await page.reload();
+
+  await expect(page.getByRole('heading', { name: 'Knauf Goldband E', exact: true })).toBeVisible();
+  await page.getByLabel('Poedermassa').fill('12,5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
 });
 
 test.describe('browser Market defaults', () => {
