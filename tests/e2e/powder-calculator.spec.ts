@@ -36,7 +36,7 @@ test('production output exposes installable metadata and a complete release cach
     bundledStylesheets.every((stylesheet) => stylesheet.origin === new URL(page.url()).origin)
   ).toBe(true);
 
-  const semanticFoundation = await page.evaluate(() => {
+  const articlePaddingBlockStart = await page.evaluate(() => {
     const article = document.createElement('article');
     article.textContent = 'Blades semantic foundation';
     document.body.append(article);
@@ -44,7 +44,7 @@ test('production output exposes installable metadata and a complete release cach
     article.remove();
     return paddingBlockStart;
   });
-  expect(Number.parseFloat(semanticFoundation)).toBeGreaterThan(0);
+  expect(Number.parseFloat(articlePaddingBlockStart)).toBeGreaterThan(0);
 
   const release = await page.evaluate(async (cachePrefix) => {
     const keys = await caches.keys();
