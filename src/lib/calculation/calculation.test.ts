@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { calculateAreaRequirements, calculateRequiredLiquid } from './calculation';
+import { calculateAreaSquareMetresFromDimensions } from '../presentation/number-formatting';
 import { formatLiquidQuantity } from '../presentation/number-formatting';
 
 describe('powder calculator', () => {
@@ -78,5 +79,26 @@ describe('area calculator', () => {
     expect(result.assumptions.wasteMargin).toBe(0);
     expect(result.requiredPowderKg).toBe(80);
     expect(result.requiredLiquidLitres).toBe(51.2);
+  });
+
+  it('produces the same quantities for equivalent direct and dimension areas', () => {
+    const directResult = calculateAreaRequirements({
+      areaSquareMetres: 10,
+      thicknessMm: 10,
+      ...areaVariant
+    });
+    const dimensionResult = calculateAreaRequirements({
+      areaSquareMetres: calculateAreaSquareMetresFromDimensions({
+        width: 400,
+        widthUnit: 'cm',
+        height: 250,
+        heightUnit: 'cm'
+      }),
+      thicknessMm: 10,
+      ...areaVariant
+    });
+
+    expect(dimensionResult.requiredPowderKg).toBe(directResult.requiredPowderKg);
+    expect(dimensionResult.requiredLiquidLitres).toBe(directResult.requiredLiquidLitres);
   });
 });

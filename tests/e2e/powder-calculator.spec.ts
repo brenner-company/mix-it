@@ -23,11 +23,11 @@ test('mobile user can calculate powder and liquid for a direct area', async ({ p
   await page.goto('/product/knauf-goldband-e-be');
 
   await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
-  await expect(page.getByLabel('Oppervlakte')).toHaveValue('');
+  await expect(page.getByRole('textbox', { name: 'Oppervlakte', exact: true })).toHaveValue('');
   await expect(page.getByLabel('Laagdikte')).toHaveValue('10');
   await expect(page.getByLabel('Verspillingsmarge')).toHaveValue('10');
 
-  await page.getByLabel('Oppervlakte').fill('10');
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
   const result = page.getByTestId('area-calculation-result');
@@ -42,11 +42,103 @@ test('mobile user can calculate powder and liquid for a direct area', async ({ p
   await expect(result).toContainText('Verspillingsmarge: 10%');
 });
 
+test('area calculator accepts mixed dimensions and preserves both area entry modes', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  const dimensionsMode = page.getByRole('button', { name: 'Breedte en hoogte' });
+  await dimensionsMode.click();
+
+  await page.getByRole('textbox', { name: 'Breedte', exact: true }).fill('4');
+  await page.getByRole('textbox', { name: 'Hoogte', exact: true }).fill('250');
+  await page.locator('#height-unit').selectOption('cm');
+  await page.getByLabel('Laagdikte').fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  const result = page.getByTestId('area-calculation-result');
+  await expect(result).toContainText('88 kg');
+  await expect(result).toContainText('56,3 L');
+  await expect(result).toContainText('10 m²');
+  await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
+  await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
+  await expect(page.locator('#height-unit')).toHaveValue('cm');
+
+  await page.getByRole('button', { name: 'Rechtstreekse oppervlakte' }).click();
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+  await expect(result).toContainText('88 kg');
+  await expect(result).toContainText('56,3 L');
+
+  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
+  await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
+  await expect(page.locator('#height-unit')).toHaveValue('cm');
+  await expect(result).toContainText('88 kg');
+
+  await page.getByRole('button', { name: 'Poedermassa' }).click();
+  await page.getByLabel('Poedermassa').fill('12,5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await page.getByRole('button', { name: 'Rechtstreekse oppervlakte' }).click();
+  await expect(page.getByRole('textbox', { name: 'Oppervlakte', exact: true })).toHaveValue('10');
+  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
+  await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
+});
+
+test('incomplete dimensions are announced without showing a misleading result', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  const width = page.getByRole('textbox', { name: 'Breedte', exact: true });
+  const height = page.getByRole('textbox', { name: 'Hoogte', exact: true });
+  await width.fill('4');
+  await height.fill('2,5');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+  await height.fill('');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  await expect(page.getByRole('alert')).toHaveText('Voer een positieve breedte en hoogte in.');
+  await expect(page.getByTestId('area-calculation-result')).toHaveCount(0);
+  await expect(height).toHaveAttribute('aria-invalid', 'true');
+});
+
+test('editing shared area assumptions clears results for both entry modes', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  const result = page.getByTestId('area-calculation-result');
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await page.getByRole('textbox', { name: 'Breedte', exact: true }).fill('4');
+  await page.getByRole('textbox', { name: 'Hoogte', exact: true }).fill('2,5');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+  await expect(result).toBeVisible();
+
+  await page.getByLabel('Laagdikte').fill('15');
+  await expect(result).toHaveCount(0);
+  await page.getByRole('button', { name: 'Rechtstreekse oppervlakte' }).click();
+  await expect(result).toHaveCount(0);
+});
+
+test('dimension entry fits a touch-sized viewport without horizontal scrolling', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+});
+
 test('area mode warns when layer thickness is outside manufacturer guidance', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-be');
 
   await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
-  await page.getByLabel('Oppervlakte').fill('10');
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByLabel('Laagdikte').fill('30');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 

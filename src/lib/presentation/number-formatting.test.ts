@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  calculateAreaSquareMetresFromDimensions,
   formatEnteredPowderMass,
   formatLiquidQuantity,
   formatMetricNumber,
@@ -21,6 +22,33 @@ describe('presentation number formatting', () => {
     expect(parseNonNegativeMetricInput('0')).toBe(0);
     expect(parseNonNegativeMetricInput('10,5')).toBe(10.5);
     expect(parseNonNegativeMetricInput('-1')).toBeNull();
+  });
+
+  it('normalizes metre, centimetre, and mixed-unit dimensions to square metres', () => {
+    expect(
+      calculateAreaSquareMetresFromDimensions({
+        width: 4,
+        widthUnit: 'm',
+        height: 2.5,
+        heightUnit: 'm'
+      })
+    ).toBe(10);
+    expect(
+      calculateAreaSquareMetresFromDimensions({
+        width: 400,
+        widthUnit: 'cm',
+        height: 250,
+        heightUnit: 'cm'
+      })
+    ).toBe(10);
+    expect(
+      calculateAreaSquareMetresFromDimensions({
+        width: 4,
+        widthUnit: 'm',
+        height: 250,
+        heightUnit: 'cm'
+      })
+    ).toBe(10);
   });
 
   it('preserves all entered decimal digits in the displayed powder mass', () => {

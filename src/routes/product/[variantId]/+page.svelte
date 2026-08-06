@@ -8,6 +8,8 @@
     calculateRequiredLiquid
   } from '$lib/calculation/calculation';
   import {
+    calculateAreaSquareMetresFromDimensions,
+    type DimensionUnit,
     formatEnteredPowderMass,
     formatLiquidQuantity,
     formatMetricNumber,
@@ -24,15 +26,21 @@
   let language = $state<Language>(readLanguage());
   let market = $state<Market>(readMarket());
   let calculatorMode = $state<'powder' | 'area'>('powder');
+  let areaInputMode = $state<'direct' | 'dimensions'>('direct');
   let powderInput = $state('');
   let validationMessage = $state('');
   let enteredPowderMass = $state<number | null>(null);
   let submittedPowderInput = $state('');
   let areaInput = $state('');
+  let widthInput = $state('');
+  let widthUnit = $state<DimensionUnit>('m');
+  let heightInput = $state('');
+  let heightUnit = $state<DimensionUnit>('m');
   let thicknessInput = $state<string | undefined>(undefined);
   let wasteMarginInput = $state('10');
   let areaValidationMessage = $state('');
-  let areaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
+  let directAreaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
+  let dimensionsAreaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
 
   const copy = $derived(getMessages(language));
   const translation = $derived(variant.translations[language]);
@@ -42,6 +50,9 @@
   const areaAvailable = $derived(variant.referenceConsumption?.referenceThicknessMm !== undefined);
   const displayedThickness = $derived(
     thicknessInput ?? variant.referenceConsumption?.referenceThicknessMm?.toString() ?? ''
+  );
+  const areaCalculation = $derived(
+    areaInputMode === 'direct' ? directAreaCalculation : dimensionsAreaCalculation
   );
   const showGuidance = $derived(
     (calculatorMode === 'powder' && liquid !== null) ||
@@ -63,8 +74,33 @@
     calculatorMode = mode;
   }
 
+  function selectAreaInputMode(mode: 'direct' | 'dimensions'): void {
+    areaInputMode = mode;
+    areaValidationMessage = '';
+  }
+
   function changeThickness(event: Event): void {
     thicknessInput = (event.currentTarget as HTMLInputElement).value;
+    clearAllAreaState();
+  }
+
+  function clearActiveAreaState(): void {
+    clearActiveAreaCalculation();
+    areaValidationMessage = '';
+  }
+
+  function clearAllAreaState(): void {
+    directAreaCalculation = null;
+    dimensionsAreaCalculation = null;
+    areaValidationMessage = '';
+  }
+
+  function clearActiveAreaCalculation(): void {
+    if (areaInputMode === 'direct') {
+      directAreaCalculation = null;
+    } else {
+      dimensionsAreaCalculation = null;
+    }
   }
 
   function calculate(event: SubmitEvent): void {
@@ -87,43 +123,71 @@
     event.preventDefault();
 
     const referenceConsumption = variant.referenceConsumption;
-    if (!referenceConsumption?.referenceThicknessMm) return;
+    if (referenceConsumption?.referenceThicknessMm === undefined) return;
     const completeReferenceConsumption = {
       powderKgPerSquareMetre: referenceConsumption.powderKgPerSquareMetre,
       referenceThicknessMm: referenceConsumption.referenceThicknessMm
     };
 
-    const parsedArea = parseMetricInput(areaInput);
     const parsedThickness = parseMetricInput(displayedThickness);
     const parsedWasteMargin = parseNonNegativeMetricInput(wasteMarginInput);
 
-    if (parsedArea === null) {
-      areaCalculation = null;
-      areaValidationMessage = copy.invalidArea;
-      return;
-    }
-
     if (parsedThickness === null) {
-      areaCalculation = null;
+      clearActiveAreaCalculation();
       areaValidationMessage = copy.invalidThickness;
       return;
     }
 
     if (parsedWasteMargin === null) {
-      areaCalculation = null;
+      clearActiveAreaCalculation();
       areaValidationMessage = copy.invalidWasteMargin;
       return;
     }
 
+    let areaSquareMetres: number;
+    if (areaInputMode === 'direct') {
+      const parsedArea = parseMetricInput(areaInput);
+
+      if (parsedArea === null) {
+        clearActiveAreaCalculation();
+        areaValidationMessage = copy.invalidArea;
+        return;
+      }
+
+      areaSquareMetres = parsedArea;
+    } else {
+      const parsedWidth = parseMetricInput(widthInput);
+      const parsedHeight = parseMetricInput(heightInput);
+
+      if (parsedWidth === null || parsedHeight === null) {
+        clearActiveAreaCalculation();
+        areaValidationMessage = copy.invalidDimensions;
+        return;
+      }
+
+      areaSquareMetres = calculateAreaSquareMetresFromDimensions({
+        width: parsedWidth,
+        widthUnit,
+        height: parsedHeight,
+        heightUnit
+      });
+    }
+
     areaValidationMessage = '';
-    areaCalculation = calculateAreaRequirements({
-      areaSquareMetres: parsedArea,
+    const calculation = calculateAreaRequirements({
+      areaSquareMetres,
       thicknessMm: parsedThickness,
       wasteMargin: parsedWasteMargin / 100,
       mixingRatio: variant.mixingRatio,
       referenceConsumption: completeReferenceConsumption,
       supportedThicknessRange: variant.supportedThicknessRange
     });
+
+    if (areaInputMode === 'direct') {
+      directAreaCalculation = calculation;
+    } else {
+      dimensionsAreaCalculation = calculation;
+    }
   }
 </script>
 
@@ -194,21 +258,94 @@
       </form>
     {:else if areaAvailable}
       <form onsubmit={calculateArea} novalidate>
-        <label for="area" class="field-label">{copy.areaLabel}</label>
-        <div class="input-with-unit">
-          <input
-            id="area"
-            bind:value={areaInput}
-            aria-describedby="area-hint area-error"
-            aria-invalid={areaValidationMessage ? 'true' : 'false'}
-            inputmode="decimal"
-            autocomplete="off"
-            type="text"
-            placeholder={language === 'nl' ? '25' : '25'}
-          />
-          <span aria-hidden="true">m²</span>
+        <div class="mode-selector area-input-mode-selector" role="group" aria-label={copy.areaInputModeLabel}>
+          <button
+            type="button"
+            class={areaInputMode === 'direct' ? 'mode-button mode-active' : 'mode-button'}
+            aria-pressed={areaInputMode === 'direct'}
+            onclick={() => selectAreaInputMode('direct')}
+          >{copy.directAreaMode}</button>
+          <button
+            type="button"
+            class={areaInputMode === 'dimensions' ? 'mode-button mode-active' : 'mode-button'}
+            aria-pressed={areaInputMode === 'dimensions'}
+            onclick={() => selectAreaInputMode('dimensions')}
+          >{copy.dimensionsMode}</button>
         </div>
-        <p id="area-hint" class="field-hint">{copy.areaHint}</p>
+
+        {#if areaInputMode === 'direct'}
+          <label for="area" class="field-label">{copy.areaLabel}</label>
+          <div class="input-with-unit">
+            <input
+              id="area"
+              bind:value={areaInput}
+              oninput={clearActiveAreaState}
+              aria-describedby="area-hint area-error"
+              aria-invalid={areaValidationMessage ? 'true' : 'false'}
+              inputmode="decimal"
+              autocomplete="off"
+              type="text"
+              placeholder={language === 'nl' ? '2,5' : '2.5'}
+            />
+            <span aria-hidden="true">m²</span>
+          </div>
+          <p id="area-hint" class="field-hint">{copy.areaHint}</p>
+        {:else}
+          <div class="dimensions-grid">
+            <div class="dimension-field">
+              <label for="width" class="field-label">{copy.widthLabel}</label>
+              <div class="dimension-input-row">
+                <input
+                  id="width"
+                  bind:value={widthInput}
+                  oninput={clearActiveAreaState}
+                  aria-describedby="dimensions-hint area-error"
+                  aria-invalid={areaValidationMessage ? 'true' : 'false'}
+                  inputmode="decimal"
+                  autocomplete="off"
+                  type="text"
+                  placeholder={language === 'nl' ? '2,5' : '2.5'}
+                />
+                <select
+                  id="width-unit"
+                  bind:value={widthUnit}
+                  onchange={clearActiveAreaState}
+                  aria-label={copy.widthUnitLabel}
+                >
+                  <option value="m">{copy.metres}</option>
+                  <option value="cm">{copy.centimetres}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="dimension-field">
+              <label for="height" class="field-label">{copy.heightLabel}</label>
+              <div class="dimension-input-row">
+                <input
+                  id="height"
+                  bind:value={heightInput}
+                  oninput={clearActiveAreaState}
+                  aria-describedby="dimensions-hint area-error"
+                  aria-invalid={areaValidationMessage ? 'true' : 'false'}
+                  inputmode="decimal"
+                  autocomplete="off"
+                  type="text"
+                  placeholder={language === 'nl' ? '2,5' : '2.5'}
+                />
+                <select
+                  id="height-unit"
+                  bind:value={heightUnit}
+                  onchange={clearActiveAreaState}
+                  aria-label={copy.heightUnitLabel}
+                >
+                  <option value="m">{copy.metres}</option>
+                  <option value="cm">{copy.centimetres}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <p id="dimensions-hint" class="field-hint">{copy.dimensionsHint}</p>
+        {/if}
 
         <label for="thickness" class="field-label">{copy.thicknessLabel}</label>
         <div class="input-with-unit">
@@ -231,6 +368,7 @@
           <input
             id="waste-margin"
             bind:value={wasteMarginInput}
+            oninput={clearAllAreaState}
             aria-describedby="waste-margin-hint area-error"
             aria-invalid={areaValidationMessage ? 'true' : 'false'}
             inputmode="decimal"
@@ -436,6 +574,10 @@
     opacity: 0.65;
   }
 
+  .area-input-mode-selector {
+    margin-bottom: 0.35rem;
+  }
+
   .area-unavailable {
     margin: 0;
     padding: 0.85rem 1rem;
@@ -443,6 +585,23 @@
     color: var(--muted);
     font-size: 0.86rem;
     line-height: 1.5;
+  }
+
+  .dimensions-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .dimension-input-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 8rem);
+    gap: 0.55rem;
+  }
+
+  .dimension-input-row select {
+    min-width: 0;
+    padding-right: 0.55rem;
+    padding-left: 0.55rem;
   }
 
   .input-with-unit {
@@ -694,6 +853,10 @@
 
     form {
       padding: 0.6rem 0;
+    }
+
+    .dimensions-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .calculation-result,

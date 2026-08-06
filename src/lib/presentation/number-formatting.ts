@@ -1,5 +1,14 @@
 import type { MarketVariant } from '../catalog/catalog';
 
+export type DimensionUnit = 'm' | 'cm';
+
+type AreaDimensionsInput = {
+  width: number;
+  widthUnit: DimensionUnit;
+  height: number;
+  heightUnit: DimensionUnit;
+};
+
 function marketLocale(market: MarketVariant['market']): string {
   return market === 'BE' ? 'nl-BE' : 'en-GB';
 }
@@ -22,6 +31,19 @@ export function parseMetricInput(value: string): number | null {
 
 export function parseNonNegativeMetricInput(value: string): number | null {
   return parseNumericInput(value);
+}
+
+function toMetres(value: number, unit: DimensionUnit): number {
+  return unit === 'cm' ? value / 100 : value;
+}
+
+export function calculateAreaSquareMetresFromDimensions({
+  width,
+  widthUnit,
+  height,
+  heightUnit
+}: AreaDimensionsInput): number {
+  return toMetres(width, widthUnit) * toMetres(height, heightUnit);
 }
 
 export function formatEnteredPowderMass(value: string, market: MarketVariant['market']): string {
