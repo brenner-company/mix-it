@@ -29,7 +29,7 @@
   }
 </script>
 
-<div class="flex flex-wrap items-center gap-2">
+<div class="flex flex-wrap items-center gap-1 sm:gap-2">
   <Select.Root
     type="single"
     name="language"
@@ -37,7 +37,7 @@
     onValueChange={changeLanguage}
   >
     <Select.Trigger
-      class="min-h-11 min-w-14 rounded-lg border-border bg-background px-3 font-medium shadow-none"
+      class="min-h-11 min-w-12 rounded-lg border-border bg-background px-2 text-xs font-medium shadow-none"
       aria-label={copy.languageLabel}
     >
       {language === 'nl' ? 'NL' : 'EN'}
@@ -58,7 +58,7 @@
     onValueChange={changeMarket}
   >
     <Select.Trigger
-      class="min-h-11 min-w-44 rounded-lg border-border bg-background px-3 font-medium shadow-none"
+      class="min-h-11 min-w-0 rounded-lg border-border bg-background px-2 text-xs font-medium shadow-none"
       aria-label={copy.marketLabel}
     >
       {selectedMarketLabel}

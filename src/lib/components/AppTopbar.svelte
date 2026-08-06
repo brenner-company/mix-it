@@ -23,11 +23,11 @@
 </script>
 
 <nav
-  class="flex flex-wrap items-center justify-between gap-4 border-b border-border/70 py-4 sm:py-5"
+  class="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 py-4 sm:gap-4 sm:py-5"
   aria-label={copy.primaryNavigation}
 >
   <a
-    class="text-xl font-semibold tracking-tight text-foreground no-underline"
+    class="inline-flex min-h-11 items-center text-xl font-semibold tracking-tight text-foreground no-underline"
     href="/"
     aria-label={copy.homeAriaLabel}
   >mix<span class="text-primary">-</span>it</a>
