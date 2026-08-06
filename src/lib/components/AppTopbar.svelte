@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { Language, Market } from '$lib/catalog/catalog';
   import type { Messages } from '$lib/i18n/messages';
-  import PreferencesNav from './PreferencesNav.svelte';
 
   type Props = {
     language: Language;
@@ -22,14 +21,33 @@
   let { language, market, markets, copy, onLanguageChange, onMarketChange }: Props = $props();
 </script>
 
-<nav class="topbar" aria-label={copy.primaryNavigation}>
-  <a class="wordmark" href="/" aria-label={copy.homeAriaLabel}>mix<span>-</span>it</a>
-  <PreferencesNav
-    {language}
-    {market}
-    {markets}
-    {copy}
-    {onLanguageChange}
-    {onMarketChange}
-  />
+<nav aria-label={copy.primaryNavigation}>
+  <ul>
+    <li><strong><a href="/" aria-label={copy.homeAriaLabel}>mix-it</a></strong></li>
+  </ul>
+  <ul>
+    <li>
+      <select
+        aria-label={copy.languageLabel}
+        title={copy.languageLabel}
+        value={language}
+        onchange={onLanguageChange}
+      >
+        <option value="nl">NL</option>
+        <option value="en">EN</option>
+      </select>
+    </li>
+    <li>
+      <select
+        aria-label={copy.marketLabel}
+        title={copy.marketLabel}
+        value={market}
+        onchange={onMarketChange}
+      >
+        {#each markets as marketOption (marketOption)}
+          <option value={marketOption}>{copy.marketName(marketOption)}</option>
+        {/each}
+      </select>
+    </li>
+  </ul>
 </nav>

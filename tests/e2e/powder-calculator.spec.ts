@@ -25,6 +25,27 @@ test('production output exposes installable metadata and a complete release cach
     .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
     .toBe(true);
 
+  const bundledStylesheets = await page.locator('link[rel="stylesheet"]').evaluateAll((links) =>
+    links.map((link) => {
+      const stylesheet = new URL((link as HTMLLinkElement).href);
+      return { origin: stylesheet.origin, pathname: stylesheet.pathname };
+    })
+  );
+  expect(bundledStylesheets.length).toBeGreaterThan(0);
+  expect(
+    bundledStylesheets.every((stylesheet) => stylesheet.origin === new URL(page.url()).origin)
+  ).toBe(true);
+
+  const semanticFoundation = await page.evaluate(() => {
+    const article = document.createElement('article');
+    article.textContent = 'Blades semantic foundation';
+    document.body.append(article);
+    const paddingBlockStart = getComputedStyle(article).paddingBlockStart;
+    article.remove();
+    return paddingBlockStart;
+  });
+  expect(Number.parseFloat(semanticFoundation)).toBeGreaterThan(0);
+
   const release = await page.evaluate(async (cachePrefix) => {
     const keys = await caches.keys();
     const mixItCache = keys.find((key) => key.startsWith(cachePrefix));
@@ -48,7 +69,10 @@ test('production output exposes installable metadata and a complete release cach
     '/icons/icon-512.png'
   ];
   expect(release.cachedPaths).toEqual(
-    expect.arrayContaining(expectedReleasePaths)
+    expect.arrayContaining([
+      ...expectedReleasePaths,
+      ...bundledStylesheets.map((stylesheet) => stylesheet.pathname)
+    ])
   );
 });
 
@@ -365,6 +389,22 @@ test('Market and Language preferences persist across reloads', async ({ page }) 
   await expect(page.getByLabel('Market')).toHaveValue('UK');
   await expect(page.getByRole('heading', { name: 'Catalog' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Knauf Multi Finish/ })).toBeVisible();
+});
+
+test('shared navigation and preferences fit catalog and Market Variant routes', async ({ page }) => {
+  for (const route of ['/', '/product/knauf-goldband-e-be']) {
+    await page.goto(route);
+
+    const navigation = page.getByRole('navigation', { name: 'Primaire navigatie' });
+    await expect(navigation.getByRole('link', { name: 'Mix-it home' })).toBeVisible();
+    await expect(navigation.getByLabel('Taal')).toHaveValue('nl');
+    await expect(navigation.getByLabel('Markt')).toHaveValue('BE');
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+      )
+      .toBe(true);
+  }
 });
 
 test('saved Market preference resolves direct calculator navigation to its Market Variant', async ({ page }) => {

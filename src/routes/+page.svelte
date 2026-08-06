@@ -38,7 +38,7 @@
   />
 </svelte:head>
 
-<main class="shell">
+<main class="container">
   <AppTopbar
     {language}
     {market}
@@ -136,7 +136,7 @@
   .hero-intro {
     max-width: 33rem;
     margin-bottom: 0;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     font-size: 1.08rem;
     line-height: 1.6;
   }
@@ -147,7 +147,7 @@
     align-items: center;
     gap: 0.4rem;
     max-width: 16rem;
-    color: var(--accent-dark);
+    color: var(--pico-primary);
     font-size: 2.1rem;
     text-align: center;
   }
@@ -158,11 +158,11 @@
     height: 4.5rem;
     place-items: center;
     border-radius: 50%;
-    background: var(--mint);
+    background: var(--pico-card-sectioning-background-color);
   }
 
   .hero-mark span:nth-child(2) {
-    color: var(--ink);
+    color: var(--pico-color);
     background: #f5d2a5;
   }
 
@@ -186,7 +186,7 @@
 
   .catalog-count {
     margin-bottom: 0.2rem;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     font-size: 0.8rem;
   }
 
@@ -225,7 +225,7 @@
   }
 
   .variant-category {
-    color: var(--accent-dark);
+    color: var(--pico-primary);
     font-size: 0.76rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -244,11 +244,11 @@
 
   .variant-card p {
     margin-bottom: 1.2rem;
-    color: var(--muted);
+    color: var(--pico-muted-color);
   }
 
   .variant-link {
-    color: var(--accent-dark);
+    color: var(--pico-primary);
     font-size: 0.9rem;
     font-weight: 800;
   }

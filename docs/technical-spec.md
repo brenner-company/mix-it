@@ -43,7 +43,7 @@ localization.
 | Application | SvelteKit, Svelte, strict TypeScript | A compact component model with routing, static generation, and first-class service-worker support |
 | Build | Vite and `@sveltejs/adapter-static` | Produces deployable static assets without a production server |
 | Offline installation | SvelteKit service worker and a web app manifest | Keeps offline behaviour and cache versioning explicit |
-| Styling | Semantic HTML and scoped CSS with custom properties | Minimizes runtime and design-system dependencies while supporting accessible controls |
+| Styling | Full Blades CSS foundation with semantic HTML | Provides a bundled, class-light baseline without a component framework or parallel design-token system |
 | Catalog validation | Versioned JSON validated with Zod during development and CI | Makes catalog errors fail before publication and shares types with the application |
 | Localization | Paraglide JS | Keeps Dutch and English messages compile-time checked and shipped with the application |
 | Number presentation | `Intl.NumberFormat` | Uses the selected Market's conventions without coupling Market to Language |
@@ -55,6 +55,14 @@ localization.
 
 Exact dependency and runtime versions belong in `package.json` and the lockfile,
 not in this document.
+
+The root application stylesheet imports the full precompiled Blades artifact from
+its npm package. Vite includes that CSS in the versioned production build, and the
+service worker precaches the resulting same-origin stylesheet with the rest of the
+application release. No stylesheet is loaded from a CDN. Shared page containment
+and primary navigation follow Blades' semantic `container` and `nav` patterns.
+Route-specific scoped styles may remain while catalog and calculator presentation
+move to semantic Blades markup in later slices.
 
 ## Calculation design
 

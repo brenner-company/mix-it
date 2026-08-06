@@ -301,7 +301,7 @@
   <meta name="description" content={copy.productDescription(translation.name)} />
 </svelte:head>
 
-<main class="shell">
+<main class="container">
   <AppTopbar
     {language}
     {market}
@@ -601,13 +601,13 @@
   }
 
   .breadcrumb a {
-    color: var(--muted);
+    color: var(--pico-muted-color);
     font-size: 0.86rem;
     text-decoration: none;
   }
 
   .breadcrumb a:hover {
-    color: var(--accent-dark);
+    color: var(--pico-primary);
   }
 
   .product-heading {
@@ -631,7 +631,7 @@
 
   .product-family {
     margin-bottom: 0;
-    color: var(--muted);
+    color: var(--pico-muted-color);
   }
 
   .calculator {
@@ -654,7 +654,7 @@
   .calculator-intro p:last-child {
     max-width: 34rem;
     margin-bottom: 0;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     line-height: 1.55;
   }
 
@@ -674,14 +674,14 @@
   .mode-button {
     min-height: 2.8rem;
     margin: 0;
-    color: var(--ink);
+    color: var(--pico-color);
     background: transparent;
   }
 
   .mode-button:hover,
   .mode-button.mode-active {
-    color: var(--ink);
-    background: var(--paper);
+    color: var(--pico-color);
+    background: var(--pico-card-background-color);
   }
 
   .mode-button.mode-active {
@@ -689,7 +689,7 @@
   }
 
   .mode-button:disabled {
-    color: var(--muted);
+    color: var(--pico-muted-color);
     background: transparent;
     cursor: not-allowed;
     opacity: 0.65;
@@ -702,8 +702,8 @@
   .area-unavailable {
     margin: 0;
     padding: 0.85rem 1rem;
-    border-left: 4px solid var(--line);
-    color: var(--muted);
+    border-left: 4px solid var(--pico-muted-border-color);
+    color: var(--pico-muted-color);
     font-size: 0.86rem;
     line-height: 1.5;
   }
@@ -739,7 +739,7 @@
     position: absolute;
     top: 50%;
     right: 1rem;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     font-weight: 700;
     transform: translateY(-50%);
   }
@@ -758,24 +758,24 @@
     border: 0;
     border-radius: 0.8rem;
     color: #fffdf8;
-    background: var(--ink);
+    background: var(--pico-contrast-background);
     cursor: pointer;
     font-weight: 800;
   }
 
   button:hover {
-    background: var(--accent-dark);
+    background: var(--pico-primary-hover-background);
   }
 
   .calculation-result {
     padding: 1.35rem;
     border-radius: 1.15rem;
-    background: var(--mint);
+    background: var(--pico-card-sectioning-background-color);
   }
 
   .result-label {
     margin-bottom: 0.4rem;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     font-size: 0.82rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -784,7 +784,7 @@
 
   .liquid-value {
     margin-bottom: 0.4rem;
-    color: var(--ink);
+    color: var(--pico-color);
     font-size: clamp(3rem, 13vw, 5rem);
     font-weight: 850;
     letter-spacing: -0.09em;
@@ -793,7 +793,7 @@
 
   .result-detail {
     margin-bottom: 0;
-    color: var(--muted);
+    color: var(--pico-muted-color);
   }
 
   .area-quantities {
@@ -808,14 +808,14 @@
 
   .quantity-label {
     margin-bottom: 0.25rem;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     font-size: 0.82rem;
     font-weight: 800;
   }
 
   .powder-value {
     margin: 0;
-    color: var(--ink);
+    color: var(--pico-color);
     font-size: clamp(2.35rem, 10vw, 4rem);
     font-weight: 850;
     letter-spacing: -0.08em;
@@ -848,7 +848,7 @@
   .range-warning {
     margin: 1.25rem 0 0;
     padding: 0.9rem 1rem;
-    border-left: 4px solid var(--accent);
+    border-left: 4px solid var(--pico-primary);
     color: #7d3023;
     background: #fff4e7;
     font-size: 0.88rem;
@@ -871,7 +871,7 @@
   .guidance p,
   .disclaimer p {
     margin-bottom: 0;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     line-height: 1.55;
   }
 
@@ -890,7 +890,7 @@
 
   dt {
     margin-bottom: 0.3rem;
-    color: var(--muted);
+    color: var(--pico-muted-color);
     font-size: 0.74rem;
     font-weight: 800;
     text-transform: uppercase;
@@ -904,7 +904,7 @@
 
   .disclaimer {
     padding: 1rem;
-    border-left: 4px solid var(--accent);
+    border-left: 4px solid var(--pico-primary);
     background: #fff4e7;
   }
 
@@ -928,7 +928,7 @@
     gap: 0.45rem;
     align-content: start;
     padding: 1rem;
-    border: 1px solid var(--line);
+    border: 1px solid var(--pico-muted-border-color);
     border-radius: 1rem;
     background: rgba(255, 253, 248, 0.6);
   }
@@ -948,7 +948,7 @@
   }
 
   .review-badge p {
-    color: var(--muted);
+    color: var(--pico-muted-color);
   }
 
   @media (min-width: 44rem) {
