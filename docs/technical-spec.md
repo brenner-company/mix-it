@@ -43,7 +43,7 @@ localization.
 | Application | SvelteKit, Svelte, strict TypeScript | A compact component model with routing, static generation, and first-class service-worker support |
 | Build | Vite and `@sveltejs/adapter-static` | Produces deployable static assets without a production server |
 | Offline installation | SvelteKit service worker and a web app manifest | Keeps offline behaviour and cache versioning explicit |
-| Styling | Semantic HTML and scoped CSS with custom properties | Minimizes runtime and design-system dependencies while supporting accessible controls |
+| Styling | Tailwind CSS v4 with source-owned shadcn-svelte primitives and semantic tokens | Provides a compact, accessible component vocabulary while allowing legacy route styling to be migrated incrementally |
 | Catalog validation | Versioned JSON validated with Zod during development and CI | Makes catalog errors fail before publication and shares types with the application |
 | Localization | Paraglide JS | Keeps Dutch and English messages compile-time checked and shipped with the application |
 | Number presentation | `Intl.NumberFormat` | Uses the selected Market's conventions without coupling Market to Language |

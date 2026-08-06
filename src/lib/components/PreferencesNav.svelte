@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Language, Market } from '$lib/catalog/catalog';
+  import * as Select from '$lib/components/ui/select/index.js';
   import type { Messages } from '$lib/i18n/messages';
 
   type Props = {
@@ -7,58 +8,74 @@
     market: Market;
     markets: readonly Market[];
     copy: Pick<Messages, 'languageLabel' | 'marketLabel' | 'marketName'>;
-    onLanguageChange: (event: Event) => void;
-    onMarketChange: (event: Event) => void;
+    onLanguageChange: (language: Language) => void;
+    onMarketChange: (market: Market) => void;
   };
 
   let { language, market, markets, copy, onLanguageChange, onMarketChange }: Props = $props();
+
+  const selectedMarketLabel = $derived(copy.marketName(market));
+
+  function changeLanguage(value: string | undefined): void {
+    if (value !== 'nl' && value !== 'en') return;
+
+    onLanguageChange(value);
+  }
+
+  function changeMarket(value: string | undefined): void {
+    if (value !== 'BE' && value !== 'UK') return;
+
+    onMarketChange(value);
+  }
 </script>
 
-<div class="preferences">
-  <label>
-    <span class="sr-only">{copy.languageLabel}</span>
-    <select aria-label={copy.languageLabel} value={language} onchange={onLanguageChange}>
-      <option value="nl">NL</option>
-      <option value="en">EN</option>
-    </select>
-  </label>
-  <label>
-    <span class="sr-only">{copy.marketLabel}</span>
-    <select aria-label={copy.marketLabel} value={market} onchange={onMarketChange}>
-      {#each markets as marketOption (marketOption)}
-        <option value={marketOption}>
-          {copy.marketName(marketOption)}
-        </option>
-      {/each}
-    </select>
-  </label>
+<div class="flex flex-wrap items-center gap-2">
+  <Select.Root
+    type="single"
+    name="language"
+    value={language}
+    onValueChange={changeLanguage}
+  >
+    <Select.Trigger
+      class="min-h-11 min-w-14 rounded-lg border-border bg-background px-3 font-medium shadow-none"
+      aria-label={copy.languageLabel}
+    >
+      {language === 'nl' ? 'NL' : 'EN'}
+    </Select.Trigger>
+    <Select.Content>
+      <Select.Group>
+        <Select.Label>{copy.languageLabel}</Select.Label>
+        <Select.Item class="min-h-11" value="nl" label="NL">NL</Select.Item>
+        <Select.Item class="min-h-11" value="en" label="EN">EN</Select.Item>
+      </Select.Group>
+    </Select.Content>
+  </Select.Root>
+
+  <Select.Root
+    type="single"
+    name="market"
+    value={market}
+    onValueChange={changeMarket}
+  >
+    <Select.Trigger
+      class="min-h-11 min-w-44 rounded-lg border-border bg-background px-3 font-medium shadow-none"
+      aria-label={copy.marketLabel}
+    >
+      {selectedMarketLabel}
+    </Select.Trigger>
+    <Select.Content>
+      <Select.Group>
+        <Select.Label>{copy.marketLabel}</Select.Label>
+        {#each markets as marketOption (marketOption)}
+          <Select.Item
+            class="min-h-11"
+            value={marketOption}
+            label={copy.marketName(marketOption)}
+          >
+            {copy.marketName(marketOption)}
+          </Select.Item>
+        {/each}
+      </Select.Group>
+    </Select.Content>
+  </Select.Root>
 </div>
-
-<style>
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .preferences {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  select {
-    min-height: 2.5rem;
-    padding: 0.4rem 0.6rem;
-    border: 1px solid var(--line);
-    border-radius: 0.65rem;
-    color: var(--ink);
-    background: rgba(255, 253, 248, 0.72);
-    font-size: 0.82rem;
-  }
-</style>

@@ -19,12 +19,12 @@
     searchPublishedCatalog(publishedCatalog, search, market, manufacturer)
   );
 
-  function changeLanguage(event: Event): void {
-    language = selectLanguage(event);
+  function changeLanguage(selectedLanguage: Language): void {
+    language = selectLanguage(selectedLanguage);
   }
 
-  function changeMarket(event: Event): void {
-    market = selectMarket(event);
+  function changeMarket(selectedMarket: Market): void {
+    market = selectMarket(selectedMarket);
     search = '';
     manufacturer = '';
   }
@@ -136,7 +136,7 @@
   .hero-intro {
     max-width: 33rem;
     margin-bottom: 0;
-    color: var(--muted);
+    color: var(--muted-foreground);
     font-size: 1.08rem;
     line-height: 1.6;
   }
@@ -186,7 +186,7 @@
 
   .catalog-count {
     margin-bottom: 0.2rem;
-    color: var(--muted);
+    color: var(--muted-foreground);
     font-size: 0.8rem;
   }
 
@@ -244,7 +244,7 @@
 
   .variant-card p {
     margin-bottom: 1.2rem;
-    color: var(--muted);
+    color: var(--muted-foreground);
   }
 
   .variant-link {

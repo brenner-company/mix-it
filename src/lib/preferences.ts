@@ -56,14 +56,12 @@ export function setDocumentLanguage(language: Language): void {
   if (browser) document.documentElement.lang = language === 'nl' ? 'nl-BE' : 'en';
 }
 
-export function selectLanguage(event: Event): Language {
-  const language = (event.currentTarget as HTMLSelectElement).value as Language;
+export function selectLanguage(language: Language): Language {
   saveLanguage(language);
   return language;
 }
 
-export function selectMarket(event: Event): Market {
-  const market = (event.currentTarget as HTMLSelectElement).value as Market;
+export function selectMarket(market: Market): Market {
   saveMarket(market);
   return market;
 }

@@ -1,6 +1,20 @@
-import { expect, test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { expect, test, type Page } from '@playwright/test';
 
 import { RELEASE_CACHE_PREFIX } from '../../src/lib/offline-release';
+
+async function selectPreference(
+  page: Page,
+  label: string,
+  option: string
+): Promise<void> {
+  await page.getByRole('button', { name: label }).click();
+  await page.getByRole('option', { name: option, exact: true }).click();
+}
+
+function preference(page: Page, label: string) {
+  return page.getByRole('button', { name: label });
+}
 
 test('production output exposes installable metadata and a complete release cache', async ({ page }) => {
   const manifestResponse = await page.request.get('/manifest.webmanifest');
@@ -50,6 +64,16 @@ test('production output exposes installable metadata and a complete release cach
   expect(release.cachedPaths).toEqual(
     expect.arrayContaining(expectedReleasePaths)
   );
+});
+
+test('shared shell and Preferences pass an automated accessibility scan', async ({ page }) => {
+  await page.goto('/');
+
+  const accessibilityScan = await new AxeBuilder({ page })
+    .include('nav[aria-label]')
+    .analyze();
+
+  expect(accessibilityScan.violations).toEqual([]);
 });
 
 test('mobile user can calculate liquid for a reviewed Market Variant', async ({ page }) => {
@@ -328,15 +352,13 @@ test('Market and Language selections stay independent across a differently named
 }) => {
   await page.goto('/');
 
-  const language = page.getByLabel('Taal');
-
-  await language.selectOption('en');
-  const market = page.getByLabel('Market');
-  await expect(market).toHaveValue('BE');
+  await selectPreference(page, 'Taal', 'EN');
+  const market = preference(page, 'Market');
+  await expect(market).toContainText('Belgium');
   await expect(page.getByRole('link', { name: /Knauf Goldband E/ })).toBeVisible();
 
-  await market.selectOption('UK');
-  await expect(market).toHaveValue('UK');
+  await selectPreference(page, 'Market', 'United Kingdom');
+  await expect(market).toContainText('United Kingdom');
   await expect(
     page.getByRole('region', { name: 'Catalog' }).getByText('United Kingdom', { exact: true })
   ).toBeVisible();
@@ -347,30 +369,30 @@ test('Market and Language selections stay independent across a differently named
   await expect(page.getByRole('heading', { name: 'Knauf Multi Finish', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'P127 - Knauf Multi Finish' })).toBeVisible();
 
-  await page.getByLabel('Language').selectOption('nl');
+  await selectPreference(page, 'Language', 'NL');
   await page.getByLabel('Poedermassa').fill('12,5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
   await expect(page.getByText('Voeg een zak van 25 kg toe aan ongeveer 11,5 liter')).toBeVisible();
-  await expect(page.getByLabel('Markt')).toHaveValue('UK');
+  await expect(preference(page, 'Markt')).toContainText('Verenigd Koninkrijk');
 });
 
 test('Market and Language preferences persist across reloads', async ({ page }) => {
   await page.goto('/');
 
-  await page.getByLabel('Markt').selectOption('UK');
-  await page.getByLabel('Taal').selectOption('en');
+  await selectPreference(page, 'Markt', 'Verenigd Koninkrijk');
+  await selectPreference(page, 'Taal', 'EN');
   await page.reload();
 
-  await expect(page.getByLabel('Language')).toHaveValue('en');
-  await expect(page.getByLabel('Market')).toHaveValue('UK');
+  await expect(preference(page, 'Language')).toContainText('EN');
+  await expect(preference(page, 'Market')).toContainText('United Kingdom');
   await expect(page.getByRole('heading', { name: 'Catalog' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Knauf Multi Finish/ })).toBeVisible();
 });
 
 test('saved Market preference resolves direct calculator navigation to its Market Variant', async ({ page }) => {
   await page.goto('/');
-  await page.getByLabel('Markt').selectOption('UK');
-  await expect(page.getByLabel('Markt')).toHaveValue('UK');
+  await selectPreference(page, 'Markt', 'Verenigd Koninkrijk');
+  await expect(preference(page, 'Markt')).toContainText('Verenigd Koninkrijk');
 
   await page.goto('/product/knauf-goldband-e-be');
 
@@ -385,15 +407,15 @@ test('changing Market clears a previously calculated area result', async ({ page
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
   await expect(page.getByTestId('area-calculation-result')).toBeVisible();
 
-  await page.getByLabel('Markt').selectOption('UK');
+  await selectPreference(page, 'Markt', 'Verenigd Koninkrijk');
   await expect(page).toHaveURL(/\/product\/knauf-goldband-e-uk$/);
   await expect(page.getByTestId('area-calculation-result')).toHaveCount(0);
 });
 
 test('UK Market accepts comma and point input and formats liquid thresholds', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-uk');
-  await page.getByLabel('Taal').selectOption('en');
-  await expect(page.getByLabel('Language')).toHaveValue('en');
+  await selectPreference(page, 'Taal', 'EN');
+  await expect(preference(page, 'Language')).toContainText('EN');
 
   const powder = page.getByLabel('Powder mass');
   const calculate = page.getByRole('button', { name: /calculate liquid/i });
@@ -486,7 +508,7 @@ test.describe('browser Market defaults', () => {
   test('uses the browser region when no Market preference exists', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByLabel('Markt')).toHaveValue('UK');
+    await expect(preference(page, 'Markt')).toContainText('Verenigd Koninkrijk');
     await expect(page.getByRole('link', { name: /Knauf Multi Finish/ })).toBeVisible();
 
     await page.goto('/product/knauf-goldband-e-be');
