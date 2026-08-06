@@ -63,6 +63,7 @@
   "area_assumption_area": "Area",
   "area_assumption_thickness": "Layer thickness",
   "area_assumption_waste_margin": "Waste Margin: {margin}%",
+  "outside_guidance_title": "Outside manufacturer guidance",
   "outside_guidance": "This thickness is outside manufacturer guidance. The estimate remains calculable. Supported Thickness Range: {min}–{max} mm.",
   "mixing_instructions": "Mixing instructions",
   "mixing_time": "Mixing time",

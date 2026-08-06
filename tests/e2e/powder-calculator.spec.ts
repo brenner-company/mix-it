@@ -96,6 +96,17 @@ test('stable Market Variant powder state passes an automated accessibility scan'
   expect(accessibilityScan.violations).toEqual([]);
 });
 
+test('stable Market Variant area state passes an automated accessibility scan', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByRole('radio', { name: 'Oppervlakte bedekken' }).click();
+
+  const accessibilityScan = await new AxeBuilder({ page })
+    .include('section[aria-labelledby="calculator-title"]')
+    .analyze();
+
+  expect(accessibilityScan.violations).toEqual([]);
+});
+
 test('Market Variant reference design attaches successful powder states for desktop and mobile review', async (
   { page },
   testInfo
@@ -220,12 +231,15 @@ test('area calculator accepts mixed dimensions and preserves both area entry mod
   await page.goto('/product/knauf-goldband-e-be');
 
   await page.getByRole('radio', { name: 'Oppervlakte bedekken' }).click();
-  const dimensionsMode = page.getByRole('button', { name: 'Breedte en hoogte' });
+  const directMode = page.getByRole('radio', { name: 'Rechtstreekse oppervlakte' });
+  const dimensionsMode = page.getByRole('radio', { name: 'Breedte en hoogte' });
+  await expect(directMode).toHaveAttribute('aria-checked', 'true');
   await dimensionsMode.click();
+  await expect(dimensionsMode).toHaveAttribute('aria-checked', 'true');
 
   await page.getByRole('textbox', { name: 'Breedte', exact: true }).fill('4');
   await page.getByRole('textbox', { name: 'Hoogte', exact: true }).fill('250');
-  await page.locator('#height-unit').selectOption('cm');
+  await selectPreference(page, 'Eenheid van de hoogte', 'centimeter (cm)');
   await page.getByLabel('Laagdikte').fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
@@ -235,36 +249,61 @@ test('area calculator accepts mixed dimensions and preserves both area entry mod
   await expect(result).toContainText('10 m²');
   await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
   await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
-  await expect(page.locator('#height-unit')).toHaveValue('cm');
+  await expect(page.getByRole('button', { name: 'Eenheid van de hoogte' })).toContainText(
+    'centimeter (cm)'
+  );
 
-  await page.getByRole('button', { name: 'Rechtstreekse oppervlakte' }).click();
+  await directMode.click();
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
   await expect(result).toContainText('88 kg');
   await expect(result).toContainText('56,3 L');
 
-  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await dimensionsMode.click();
   await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
   await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
-  await expect(page.locator('#height-unit')).toHaveValue('cm');
+  await expect(page.getByRole('button', { name: 'Eenheid van de hoogte' })).toContainText(
+    'centimeter (cm)'
+  );
   await expect(result).toContainText('88 kg');
 
   await page.getByRole('radio', { name: 'Poedermassa' }).click();
   await page.getByLabel('Poedermassa').fill('12,5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
   await page.getByRole('radio', { name: 'Oppervlakte bedekken' }).click();
-  await page.getByRole('button', { name: 'Rechtstreekse oppervlakte' }).click();
+  await directMode.click();
   await expect(page.getByRole('textbox', { name: 'Oppervlakte', exact: true })).toHaveValue('10');
-  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await dimensionsMode.click();
   await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
   await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
+});
+
+test('direct area validation marks only the invalid field and removes a stale result', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  await page.getByRole('radio', { name: 'Oppervlakte bedekken' }).click();
+  const area = page.getByRole('textbox', { name: 'Oppervlakte', exact: true });
+  const thickness = page.getByLabel('Laagdikte');
+  const wasteMargin = page.getByLabel('Verspillingsmarge');
+  await area.fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+
+  await area.fill('');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  await expect(page.getByRole('alert')).toHaveText('Voer een positieve oppervlakte in vierkante meter in.');
+  await expect(page.getByTestId('area-calculation-result')).toHaveCount(0);
+  await expect(area).toHaveAttribute('aria-invalid', 'true');
+  await expect(thickness).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(wasteMargin).not.toHaveAttribute('aria-invalid', 'true');
 });
 
 test('incomplete dimensions are announced without showing a misleading result', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-be');
 
   await page.getByRole('radio', { name: 'Oppervlakte bedekken' }).click();
-  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await page.getByRole('radio', { name: 'Breedte en hoogte' }).click();
   const width = page.getByRole('textbox', { name: 'Breedte', exact: true });
   const height = page.getByRole('textbox', { name: 'Hoogte', exact: true });
   await width.fill('4');
@@ -288,7 +327,7 @@ test('editing shared area assumptions clears results for both entry modes', asyn
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
-  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await page.getByRole('radio', { name: 'Breedte en hoogte' }).click();
   await page.getByRole('textbox', { name: 'Breedte', exact: true }).fill('4');
   await page.getByRole('textbox', { name: 'Hoogte', exact: true }).fill('2,5');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
@@ -296,7 +335,7 @@ test('editing shared area assumptions clears results for both entry modes', asyn
 
   await page.getByLabel('Laagdikte').fill('15');
   await expect(result).toHaveCount(0);
-  await page.getByRole('button', { name: 'Rechtstreekse oppervlakte' }).click();
+  await page.getByRole('radio', { name: 'Rechtstreekse oppervlakte' }).click();
   await expect(result).toHaveCount(0);
 });
 
@@ -320,7 +359,7 @@ test('calculator mode and area inputs persist through a reload', async ({ page }
 test('dimension entry fits a touch-sized viewport without horizontal scrolling', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-be');
   await page.getByRole('radio', { name: 'Oppervlakte bedekken' }).click();
-  await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
+  await page.getByRole('radio', { name: 'Breedte en hoogte' }).click();
 
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
@@ -337,6 +376,40 @@ test('keyboard users can submit the powder calculator without pointer interactio
   await page.keyboard.press('Enter');
 
   await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+});
+
+test('keyboard users can operate the area calculator without pointer interaction', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  const areaMode = page.getByRole('radio', { name: 'Oppervlakte bedekken' });
+  await areaMode.focus();
+  await page.keyboard.press('Enter');
+  await expect(areaMode).toHaveAttribute('aria-checked', 'true');
+
+  const dimensionsMode = page.getByRole('radio', { name: 'Breedte en hoogte' });
+  await dimensionsMode.focus();
+  await page.keyboard.press('Enter');
+  await expect(dimensionsMode).toHaveAttribute('aria-checked', 'true');
+
+  const width = page.getByRole('textbox', { name: 'Breedte', exact: true });
+  const height = page.getByRole('textbox', { name: 'Hoogte', exact: true });
+  await width.focus();
+  await page.keyboard.type('4');
+  await height.focus();
+  await page.keyboard.type('250');
+
+  const heightUnit = page.getByRole('button', { name: 'Eenheid van de hoogte' });
+  await heightUnit.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+  await expect(heightUnit).toContainText('centimeter (cm)');
+
+  const calculate = page.getByRole('button', { name: /Bereken poeder en vloeistof/i });
+  await calculate.focus();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
 });
 
 test('area mode warns when layer thickness is outside manufacturer guidance', async ({ page }) => {

@@ -73,6 +73,7 @@ export function getMessages(language: Language) {
     areaAssumptionThickness: m.area_assumption_thickness(undefined, { locale }),
     areaAssumptionWasteMargin: (margin: string) =>
       m.area_assumption_waste_margin({ margin }, { locale }),
+    outsideGuidanceTitle: m.outside_guidance_title(undefined, { locale }),
     outsideGuidance: (min: string, max: string) =>
       m.outside_guidance({ min, max }, { locale }),
     mixingInstructions: m.mixing_instructions(undefined, { locale }),

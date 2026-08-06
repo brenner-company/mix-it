@@ -97,9 +97,7 @@ body {
   color: var(--foreground);
 }
 
-button,
-.legacy-area-form input,
-.legacy-area-form select {
+button {
   font: inherit;
 }
 
@@ -130,33 +128,6 @@ a {
   color: var(--muted-foreground);
 }
 
-.field-label {
-  display: block;
-  margin-bottom: 0.45rem;
-  font-size: 0.86rem;
-  font-weight: 750;
-}
-
-.field-hint {
-  margin: 0.45rem 0 0;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-input,
-select {
-  width: 100%;
-  min-height: 3.15rem;
-  border: 1px solid var(--line);
-  border-radius: 0.8rem;
-  padding: 0.75rem 0.9rem;
-  color: var(--ink);
-  background: #fff;
-}
-
-.legacy-area-form input:focus-visible,
-.legacy-area-form select:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;

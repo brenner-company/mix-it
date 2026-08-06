@@ -42,7 +42,7 @@
           class="min-h-12 pr-12 text-lg font-semibold"
         />
         <span
-          class="pointer-events-none absolute inset-y-0 right-4 flex items-center font-semibold text-muted-foreground"
+          class="pointer-events-none absolute inset-y-0 right-4 flex items-center font-semibold text-foreground"
           aria-hidden="true"
         >kg</span>
       </div>

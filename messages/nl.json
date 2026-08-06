@@ -63,6 +63,7 @@
   "area_assumption_area": "Oppervlakte",
   "area_assumption_thickness": "Laagdikte",
   "area_assumption_waste_margin": "Verspillingsmarge: {margin}%",
+  "outside_guidance_title": "Buiten de richtlijnen van de fabrikant",
   "outside_guidance": "Deze laagdikte valt buiten de richtlijnen van de fabrikant. De schatting blijft berekenbaar. Supported Thickness Range: {min}–{max} mm.",
   "mixing_instructions": "Menginstructies",
   "mixing_time": "Mengtijd",
