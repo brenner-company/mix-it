@@ -5,12 +5,13 @@
   type Props = {
     language: Language;
     market: Market;
-    copy: Pick<Messages, 'languageLabel' | 'marketLabel' | 'marketBelgium'>;
+    markets: readonly Market[];
+    copy: Pick<Messages, 'languageLabel' | 'marketLabel' | 'marketName'>;
     onLanguageChange: (event: Event) => void;
     onMarketChange: (event: Event) => void;
   };
 
-  let { language, market, copy, onLanguageChange, onMarketChange }: Props = $props();
+  let { language, market, markets, copy, onLanguageChange, onMarketChange }: Props = $props();
 </script>
 
 <div class="preferences">
@@ -24,7 +25,11 @@
   <label>
     <span class="sr-only">{copy.marketLabel}</span>
     <select aria-label={copy.marketLabel} value={market} onchange={onMarketChange}>
-      <option value="BE">{copy.marketBelgium}</option>
+      {#each markets as marketOption (marketOption)}
+        <option value={marketOption}>
+          {copy.marketName(marketOption)}
+        </option>
+      {/each}
     </select>
   </label>
 </div>

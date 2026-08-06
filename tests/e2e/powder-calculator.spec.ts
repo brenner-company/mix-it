@@ -12,6 +12,9 @@ test('mobile user can calculate liquid for a reviewed Market Variant', async ({ 
 
   await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
   await expect(page.getByTestId('calculation-result')).toContainText('12,5 kg');
+  await page.getByLabel('Poedermassa').fill('12.5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
   await expect(page.getByText('Strooi een zak van 25 kg')).toBeVisible();
   await expect(page.getByText('Enkele minuten', { exact: true })).toBeVisible();
   await expect(page.getByText('Ongeveer 2,5 tot 3 uur')).toBeVisible();
@@ -40,6 +43,10 @@ test('mobile user can calculate powder and liquid for a direct area', async ({ p
   await expect(result).toContainText('Laagdikte');
   await expect(result).toContainText('10 mm');
   await expect(result).toContainText('Verspillingsmarge: 10%');
+
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10.0');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+  await expect(result).toContainText('56,3 L');
 });
 
 test('area calculator accepts mixed dimensions and preserves both area entry modes', async ({ page }) => {
@@ -198,4 +205,116 @@ test('unreviewed Market Variants cannot be opened by direct navigation', async (
 
   await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Knauf MiXem Basic' })).toHaveCount(0);
+});
+
+test('Market and Language selections stay independent across a differently named Market Variant', async ({
+  page
+}) => {
+  await page.goto('/');
+
+  const language = page.getByLabel('Taal');
+
+  await language.selectOption('en');
+  const market = page.getByLabel('Market');
+  await expect(market).toHaveValue('BE');
+  await expect(page.getByRole('link', { name: /Knauf Goldband E/ })).toBeVisible();
+
+  await market.selectOption('UK');
+  await expect(market).toHaveValue('UK');
+  await expect(
+    page.getByRole('region', { name: 'Catalog' }).getByText('United Kingdom', { exact: true })
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: /Knauf Multi Finish/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Knauf Goldband E/ })).toHaveCount(0);
+
+  await page.getByRole('link', { name: /Knauf Multi Finish/ }).click();
+  await expect(page.getByRole('heading', { name: 'Knauf Multi Finish', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'P127 - Knauf Multi Finish' })).toBeVisible();
+
+  await page.getByLabel('Language').selectOption('nl');
+  await page.getByLabel('Poedermassa').fill('12,5');
+  await page.getByRole('button', { name: /bereken vloeistof/i }).click();
+  await expect(page.getByText('Voeg een zak van 25 kg toe aan ongeveer 11,5 liter')).toBeVisible();
+  await expect(page.getByLabel('Markt')).toHaveValue('UK');
+});
+
+test('Market and Language preferences persist across reloads', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByLabel('Markt').selectOption('UK');
+  await page.getByLabel('Taal').selectOption('en');
+  await page.reload();
+
+  await expect(page.getByLabel('Language')).toHaveValue('en');
+  await expect(page.getByLabel('Market')).toHaveValue('UK');
+  await expect(page.getByRole('heading', { name: 'Catalog' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Knauf Multi Finish/ })).toBeVisible();
+});
+
+test('saved Market preference resolves direct calculator navigation to its Market Variant', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Markt').selectOption('UK');
+
+  await page.goto('/product/knauf-goldband-e-be');
+
+  await expect(page).toHaveURL(/\/product\/knauf-goldband-e-uk$/);
+  await expect(page.getByRole('heading', { name: 'Knauf Multi Finish', exact: true })).toBeVisible();
+});
+
+test('changing Market clears a previously calculated area result', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+  await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+  await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
+  await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+  await expect(page.getByTestId('area-calculation-result')).toBeVisible();
+
+  await page.getByLabel('Markt').selectOption('UK');
+  await expect(page).toHaveURL(/\/product\/knauf-goldband-e-uk$/);
+  await expect(page.getByTestId('area-calculation-result')).toHaveCount(0);
+});
+
+test('UK Market accepts comma and point input and formats liquid thresholds', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-uk');
+  await page.getByLabel('Taal').selectOption('en');
+
+  const powder = page.getByLabel('Powder mass');
+  const calculate = page.getByRole('button', { name: /calculate liquid/i });
+  const result = page.getByTestId('calculation-result');
+
+  await powder.fill('1');
+  await calculate.click();
+  await expect(result).toContainText('460 ml');
+
+  await powder.fill('7,0');
+  await calculate.click();
+  await expect(result).toContainText('3,220 ml');
+
+  await powder.fill('12.0');
+  await calculate.click();
+  await expect(result).toContainText('5.5 L');
+  await expect(page.getByText('Displayed quantities follow the selected Market, for example 5.0 L.')).toBeVisible();
+  await expect(page.getByText('Add one 25 kg bag to approximately 11.5 litres')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Area to cover' }).click();
+  await page.getByRole('textbox', { name: 'Area', exact: true }).fill('10,0');
+  await page.getByRole('button', { name: /calculate powder and liquid/i }).click();
+  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+  await expect(page.getByTestId('area-calculation-result')).toContainText('40.5 L');
+  await page.getByRole('textbox', { name: 'Area', exact: true }).fill('10.0');
+  await page.getByRole('button', { name: /calculate powder and liquid/i }).click();
+  await expect(page.getByTestId('area-calculation-result')).toContainText('40.5 L');
+});
+
+test.describe('browser Market defaults', () => {
+  test.use({ locale: 'en-GB' });
+
+  test('uses the browser region when no Market preference exists', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.getByLabel('Markt')).toHaveValue('UK');
+    await expect(page.getByRole('link', { name: /Knauf Multi Finish/ })).toBeVisible();
+
+    await page.goto('/product/knauf-goldband-e-be');
+    await expect(page).toHaveURL(/\/product\/knauf-goldband-e-uk$/);
+  });
 });

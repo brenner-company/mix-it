@@ -6,12 +6,20 @@
   type Props = {
     language: Language;
     market: Market;
-    copy: Pick<Messages, 'languageLabel' | 'marketLabel' | 'marketBelgium' | 'primaryNavigation' | 'homeAriaLabel'>;
+    markets: readonly Market[];
+    copy: Pick<
+      Messages,
+      | 'languageLabel'
+      | 'marketLabel'
+      | 'marketName'
+      | 'primaryNavigation'
+      | 'homeAriaLabel'
+    >;
     onLanguageChange: (event: Event) => void;
     onMarketChange: (event: Event) => void;
   };
 
-  let { language, market, copy, onLanguageChange, onMarketChange }: Props = $props();
+  let { language, market, markets, copy, onLanguageChange, onMarketChange }: Props = $props();
 </script>
 
 <nav class="topbar" aria-label={copy.primaryNavigation}>
@@ -19,6 +27,7 @@
   <PreferencesNav
     {language}
     {market}
+    {markets}
     {copy}
     {onLanguageChange}
     {onMarketChange}

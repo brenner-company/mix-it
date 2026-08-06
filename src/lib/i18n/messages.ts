@@ -1,6 +1,6 @@
 import { m } from '../../paraglide/messages.js';
 
-import type { Language } from '../catalog/catalog';
+import type { Language, Market } from '../catalog/catalog';
 
 export function getMessages(language: Language) {
   const locale = language === 'nl' ? 'nl' : 'en';
@@ -14,7 +14,10 @@ export function getMessages(language: Language) {
     marketVariantCount: (count: number) => m.market_variant_count({ count }, { locale }),
     languageLabel: m.language_label(undefined, { locale }),
     marketLabel: m.market_label(undefined, { locale }),
-    marketBelgium: m.market_belgium(undefined, { locale }),
+    marketName: (market: Market) =>
+      market === 'BE'
+        ? m.market_belgium(undefined, { locale })
+        : m.market_united_kingdom(undefined, { locale }),
     homeEyebrow: m.home_eyebrow(undefined, { locale }),
     homeTitle: m.home_title(undefined, { locale }),
     homeIntro: m.home_intro(undefined, { locale }),
@@ -30,6 +33,8 @@ export function getMessages(language: Language) {
     calculatorEyebrow: m.calculator_eyebrow(undefined, { locale }),
     calculatorTitle: m.calculator_title(undefined, { locale }),
     calculatorIntro: m.calculator_intro(undefined, { locale }),
+    quantityFormatHint: (example: string) =>
+      m.quantity_format_hint({ example }, { locale }),
     calculatorModeLabel: m.calculator_mode_label(undefined, { locale }),
     powderMode: m.powder_mode(undefined, { locale }),
     areaMode: m.area_mode(undefined, { locale }),

@@ -1,4 +1,4 @@
-import type { MarketVariant } from '../catalog/catalog';
+import type { Market, MarketVariant } from '../catalog/catalog';
 
 export type DimensionUnit = 'm' | 'cm';
 
@@ -9,8 +9,10 @@ type AreaDimensionsInput = {
   heightUnit: DimensionUnit;
 };
 
+const marketLocales: Record<Market, string> = { BE: 'nl-BE', UK: 'en-GB' };
+
 function marketLocale(market: MarketVariant['market']): string {
-  return market === 'BE' ? 'nl-BE' : 'en-GB';
+  return marketLocales[market];
 }
 
 function parseNumericInput(value: string): number | null {
@@ -92,4 +94,8 @@ export function formatLiquidQuantity(liquidLitres: number, market: MarketVariant
     minimumFractionDigits: 1,
     maximumFractionDigits: 1
   }).format(liquidLitres)} L`;
+}
+
+export function formatQuantityExample(market: MarketVariant['market']): string {
+  return formatLiquidQuantity(5, market);
 }

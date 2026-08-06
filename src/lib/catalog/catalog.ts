@@ -25,8 +25,9 @@ const publicationMonth = z
 export const languageSchema = z.enum(['nl', 'en']);
 export type Language = z.infer<typeof languageSchema>;
 
-export const marketSchema = z.literal('BE');
+export const marketSchema = z.enum(['BE', 'UK']);
 export type Market = z.infer<typeof marketSchema>;
+export const supportedMarkets = ['BE', 'UK'] as const satisfies readonly Market[];
 
 const translationSchema = z.object({
   name: z.string().trim().min(1),
@@ -121,6 +122,16 @@ export const marketVariantSchema = z
   });
 
 export type MarketVariant = z.infer<typeof marketVariantSchema>;
+
+export function findMarketVariant(
+  variants: readonly MarketVariant[],
+  productFamilyId: MarketVariant['productFamilyId'],
+  market: Market
+): MarketVariant | undefined {
+  return variants.find(
+    (variant) => variant.productFamilyId === productFamilyId && variant.market === market
+  );
+}
 
 export const catalogSchema = z
   .object({

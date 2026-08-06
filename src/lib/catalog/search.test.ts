@@ -15,6 +15,15 @@ describe('catalog search', () => {
     expect(searchPublishedCatalog(published, 'P252', 'BE')).toHaveLength(0);
   });
 
+  it('searches only the selected Market and exposes its manufacturers', () => {
+    const published = getPublishedCatalog(candidateCatalog);
+
+    expect(searchPublishedCatalog(published, 'multi finish', 'UK')).toHaveLength(1);
+    expect(searchPublishedCatalog(published, 'P127', 'UK')).toHaveLength(1);
+    expect(searchPublishedCatalog(published, 'P131', 'UK')).toHaveLength(0);
+    expect(getManufacturers(published, 'UK')).toEqual(['Knauf UK']);
+  });
+
   it('composes a manufacturer filter with search and exposes active-market manufacturers', () => {
     const published = getPublishedCatalog(candidateCatalog);
     const secondVariant = {

@@ -5,6 +5,7 @@ import {
   formatEnteredPowderMass,
   formatLiquidQuantity,
   formatMetricNumber,
+  formatQuantityExample,
   parseNonNegativeMetricInput,
   parseMetricInput
 } from './number-formatting';
@@ -61,5 +62,17 @@ describe('presentation number formatting', () => {
     expect(formatLiquidQuantity(0.8467, 'BE')).toBe('847 ml');
     expect(formatLiquidQuantity(3.239, 'BE')).toBe('3.240 ml');
     expect(formatLiquidQuantity(5.04, 'BE')).toBe('5,0 L');
+    expect(formatLiquidQuantity(0.8467, 'UK')).toBe('847 ml');
+    expect(formatLiquidQuantity(3.239, 'UK')).toBe('3,240 ml');
+    expect(formatLiquidQuantity(5.04, 'UK')).toBe('5.0 L');
+  });
+
+  it('uses the selected Market notation for decimal and grouping separators', () => {
+    expect(formatMetricNumber(12345.67, 'BE')).toBe('12.345,67');
+    expect(formatMetricNumber(12345.67, 'UK')).toBe('12,345.67');
+    expect(formatEnteredPowderMass('12345.67', 'BE')).toBe('12.345,67');
+    expect(formatEnteredPowderMass('12345,67', 'UK')).toBe('12,345.67');
+    expect(formatQuantityExample('BE')).toBe('5,0 L');
+    expect(formatQuantityExample('UK')).toBe('5.0 L');
   });
 });

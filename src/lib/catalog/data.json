@@ -1,5 +1,5 @@
 {
-  "dataVersion": "2025.02.03",
+  "dataVersion": "2025.02.04",
   "variants": [
     {
       "id": "knauf-goldband-e-be",
@@ -55,7 +55,63 @@
         "status": "complete",
         "lastReviewed": "2025-02-03"
       },
-      "catalogDataVersion": "2025.02.03"
+      "catalogDataVersion": "2025.02.04"
+    },
+    {
+      "id": "knauf-goldband-e-uk",
+      "productFamilyId": "knauf-goldband-e",
+      "manufacturer": "Knauf UK",
+      "market": "UK",
+      "name": "Knauf Multi Finish",
+      "productCode": "P127",
+      "category": "Finishing plaster",
+      "aliases": ["Multi Finish", "finish plaster", "plaster"],
+      "packaging": {
+        "powderKg": 25,
+        "packageLabel": "25 kg bag"
+      },
+      "mixingRatio": {
+        "powderKg": 25,
+        "liquidLitres": 11.5
+      },
+      "referenceConsumption": {
+        "powderKgPerSquareMetre": 8,
+        "referenceThicknessMm": 10
+      },
+      "supportedThicknessRange": {
+        "minMm": 5,
+        "maxMm": 25
+      },
+      "translations": {
+        "nl": {
+          "name": "Knauf Multi Finish",
+          "category": "Afwerkingspleister",
+          "mixingInstructions": "Voeg een zak van 25 kg toe aan ongeveer 11,5 liter zuiver leidingwater. Meng tot een gladde massa.",
+          "mixingTime": "Tot een gladde massa",
+          "workingTime": "Ongeveer 1,5 uur",
+          "disclaimer": "Dit is een berekening op basis van de ingevoerde poedermassa. Controleer altijd de technische fiche en volg de voorschriften van de fabrikant."
+        },
+        "en": {
+          "name": "Knauf Multi Finish",
+          "category": "Finishing plaster",
+          "mixingInstructions": "Add one 25 kg bag to approximately 11.5 litres of clean tap water. Mix until smooth.",
+          "mixingTime": "Until smooth",
+          "workingTime": "Approximately 1.5 hours",
+          "disclaimer": "This is an estimate based on the powder mass entered. Always check the technical sheet and follow the manufacturer’s instructions."
+        }
+      },
+      "sourceDocument": {
+        "id": "knauf-p127-multi-finish-uk-0125",
+        "fileName": "Knauf-Multi-Finish-TECH-PROD-UK.pdf",
+        "title": "P127 - Knauf Multi Finish",
+        "version": "01/2025",
+        "publicationDate": "2025-01"
+      },
+      "catalogReview": {
+        "status": "complete",
+        "lastReviewed": "2025-02-03"
+      },
+      "catalogDataVersion": "2025.02.04"
     },
     {
       "id": "knauf-mixem-light-be",
@@ -110,7 +166,7 @@
         "status": "complete",
         "lastReviewed": "2025-02-03"
       },
-      "catalogDataVersion": "2025.02.03"
+      "catalogDataVersion": "2025.02.04"
     },
     {
       "id": "knauf-mixem-basic-be-draft",
@@ -165,7 +221,7 @@
       "catalogReview": {
         "status": "pending"
       },
-      "catalogDataVersion": "2025.02.03"
+      "catalogDataVersion": "2025.02.04"
     }
   ]
 }

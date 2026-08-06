@@ -1,10 +1,11 @@
 <script lang="ts">
   import { publishedCatalog } from '$lib/catalog/published';
-  import type { Language, Market } from '$lib/catalog/catalog';
+  import { supportedMarkets, type Language, type Market } from '$lib/catalog/catalog';
   import { getManufacturers, searchPublishedCatalog } from '$lib/catalog/search';
   import AppTopbar from '$lib/components/AppTopbar.svelte';
   import { getMessages } from '$lib/i18n/messages';
   import { readLanguage, readMarket, selectLanguage, selectMarket } from '$lib/preferences';
+  import { formatQuantityExample } from '$lib/presentation/number-formatting';
 
   let language = $state<Language>(readLanguage());
   let market = $state<Market>(readMarket());
@@ -12,6 +13,7 @@
   let manufacturer = $state('');
 
   const copy = $derived(getMessages(language));
+  const marketName = $derived(copy.marketName(market));
   const manufacturers = $derived(getManufacturers(publishedCatalog, market));
   const visibleVariants = $derived(
     searchPublishedCatalog(publishedCatalog, search, market, manufacturer)
@@ -23,6 +25,8 @@
 
   function changeMarket(event: Event): void {
     market = selectMarket(event);
+    search = '';
+    manufacturer = '';
   }
 </script>
 
@@ -35,7 +39,14 @@
 </svelte:head>
 
 <main class="shell">
-  <AppTopbar {language} {market} {copy} onLanguageChange={changeLanguage} onMarketChange={changeMarket} />
+  <AppTopbar
+    {language}
+    {market}
+    markets={supportedMarkets}
+    {copy}
+    onLanguageChange={changeLanguage}
+    onMarketChange={changeMarket}
+  />
 
   <section class="hero" aria-labelledby="home-title">
     <div class="hero-copy">
@@ -53,11 +64,12 @@
   <section class="catalog-section" aria-labelledby="catalog-title">
     <div class="section-heading">
       <div>
-        <p class="eyebrow">{market === 'BE' ? copy.marketBelgium : market}</p>
+        <p class="eyebrow">{marketName}</p>
         <h2 id="catalog-title">{copy.catalogTitle}</h2>
       </div>
       <p class="catalog-count">{copy.marketVariantCount(visibleVariants.length)}</p>
     </div>
+    <p class="format-hint field-hint">{copy.quantityFormatHint(formatQuantityExample(market))}</p>
 
     <div class="catalog-controls">
       <label class="search-field">

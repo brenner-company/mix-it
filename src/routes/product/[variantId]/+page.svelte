@@ -1,7 +1,10 @@
 <script lang="ts">
   import type { PageProps } from './$types';
+  import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
 
-  import type { Language, Market } from '$lib/catalog/catalog';
+  import { findMarketVariant, supportedMarkets, type Language, type Market } from '$lib/catalog/catalog';
+  import { publishedCatalog } from '$lib/catalog/published';
   import AppTopbar from '$lib/components/AppTopbar.svelte';
   import {
     calculateAreaRequirements,
@@ -14,17 +17,42 @@
     formatLiquidQuantity,
     formatMetricNumber,
     formatPowderQuantity,
+    formatQuantityExample,
     parseMetricInput,
     parseNonNegativeMetricInput
   } from '$lib/presentation/number-formatting';
   import { getMessages } from '$lib/i18n/messages';
-  import { readLanguage, readMarket, selectLanguage, selectMarket } from '$lib/preferences';
+  import {
+    hasSupportedMarketRegion,
+    marketFromBrowserLocale,
+    readLanguage,
+    readStoredMarket,
+    selectLanguage,
+    selectMarket
+  } from '$lib/preferences';
 
   let { data }: PageProps = $props();
   const variant = $derived(data.variant);
 
+  onMount(() => {
+    const storedMarket = readStoredMarket();
+    const browserMarket = hasSupportedMarketRegion(navigator.language)
+      ? marketFromBrowserLocale(navigator.language)
+      : null;
+    const preferredMarket = storedMarket ?? browserMarket;
+    if (!preferredMarket || preferredMarket === variant.market) return;
+
+    const preferredVariant = findMarketVariant(
+      publishedCatalog,
+      variant.productFamilyId,
+      preferredMarket
+    );
+
+    void goto(preferredVariant ? `/product/${preferredVariant.id}` : '/', { replaceState: true });
+  });
+
   let language = $state<Language>(readLanguage());
-  let market = $state<Market>(readMarket());
+  const market = $derived<Market>(variant.market);
   let calculatorMode = $state<'powder' | 'area'>('powder');
   let areaInputMode = $state<'direct' | 'dimensions'>('direct');
   let powderInput = $state('');
@@ -67,7 +95,15 @@
   }
 
   function changeMarket(event: Event): void {
-    market = selectMarket(event);
+    const selectedMarket = selectMarket(event);
+    clearCalculatorStateForMarketChange();
+    const nextVariant = findMarketVariant(publishedCatalog, variant.productFamilyId, selectedMarket);
+
+    if (nextVariant) {
+      void goto(`/product/${nextVariant.id}`);
+    } else {
+      void goto('/');
+    }
   }
 
   function selectCalculatorMode(mode: 'powder' | 'area'): void {
@@ -93,6 +129,14 @@
     directAreaCalculation = null;
     dimensionsAreaCalculation = null;
     areaValidationMessage = '';
+  }
+
+  function clearCalculatorStateForMarketChange(): void {
+    powderInput = '';
+    validationMessage = '';
+    enteredPowderMass = null;
+    submittedPowderInput = '';
+    clearAllAreaState();
   }
 
   function clearActiveAreaCalculation(): void {
@@ -197,7 +241,14 @@
 </svelte:head>
 
 <main class="shell">
-  <AppTopbar {language} {market} {copy} onLanguageChange={changeLanguage} onMarketChange={changeMarket} />
+  <AppTopbar
+    {language}
+    {market}
+    markets={supportedMarkets}
+    {copy}
+    onLanguageChange={changeLanguage}
+    onMarketChange={changeMarket}
+  />
 
   <div class="breadcrumb"><a href="/">← {copy.backToCatalog}</a></div>
 
@@ -212,6 +263,7 @@
       <p class="eyebrow">{copy.calculatorEyebrow}</p>
       <h2 id="calculator-title">{copy.calculatorTitle}</h2>
       <p>{copy.calculatorIntro}</p>
+      <p class="field-hint">{copy.quantityFormatHint(formatQuantityExample(market))}</p>
     </div>
 
     <div class="mode-selector" role="group" aria-label={copy.calculatorModeLabel}>
