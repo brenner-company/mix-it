@@ -76,6 +76,16 @@ test('shared shell and Preferences pass an automated accessibility scan', async 
   expect(accessibilityScan.violations).toEqual([]);
 });
 
+test('stable catalog state passes an automated accessibility scan', async ({ page }) => {
+  await page.goto('/');
+
+  const accessibilityScan = await new AxeBuilder({ page })
+    .include('section[aria-labelledby="catalog-title"]')
+    .analyze();
+
+  expect(accessibilityScan.violations).toEqual([]);
+});
+
 test('keyboard users can operate touch-sized Language and Market Preferences', async ({ page }) => {
   await page.goto('/');
 
@@ -334,7 +344,7 @@ test('catalog discovery searches, filters, and hides unreviewed Market Variants'
 
   await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(3);
   await expect(manufacturerFilter).toBeVisible();
-  await expect(manufacturerFilter).toHaveValue('');
+  await expect(manufacturerFilter).toContainText('Alle fabrikanten');
 
   await search.fill('  knauf belgium  ');
   await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(3);
@@ -346,12 +356,45 @@ test('catalog discovery searches, filters, and hides unreviewed Market Variants'
   await expect(page.getByText('Geen Market Variants gevonden.')).toBeVisible();
 
   await search.fill('P131');
-  await manufacturerFilter.selectOption({ label: 'Knauf Belgium' });
+  await manufacturerFilter.click();
+  await page.getByRole('option', { name: 'Knauf Belgium', exact: true }).click();
   await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(1);
 
-  await manufacturerFilter.selectOption({ label: 'Alle fabrikanten' });
-  await expect(manufacturerFilter).toHaveValue('');
+  await manufacturerFilter.click();
+  await page.getByRole('option', { name: 'Alle fabrikanten', exact: true }).click();
+  await expect(manufacturerFilter).toContainText('Alle fabrikanten');
   await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(1);
+});
+
+test('catalog controls are keyboard-operable and reset when Market changes', async ({ page }) => {
+  await page.goto('/');
+
+  const search = page.getByLabel('Zoek op naam, fabrikant, productcode of categorie');
+  const manufacturerFilter = page.getByLabel('Filter op fabrikant');
+
+  await search.fill('P252');
+  await manufacturerFilter.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('option', { name: 'Alle fabrikanten', exact: true })).toBeVisible();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(manufacturerFilter).toContainText('Knauf Belgium');
+
+  await selectPreference(page, 'Markt', 'Verenigd Koninkrijk');
+
+  await expect(search).toHaveValue('');
+  await expect(manufacturerFilter).toContainText('Alle fabrikanten');
+  await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(1);
+});
+
+test('catalog fits a touch-sized viewport without horizontal scrolling', async ({ page }) => {
+  await page.goto('/');
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+    )
+    .toBe(true);
 });
 
 test('invalid powder input is announced without showing a calculation', async ({ page }) => {

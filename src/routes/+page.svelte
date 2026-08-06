@@ -3,6 +3,12 @@
   import { supportedMarkets, type Language, type Market } from '$lib/catalog/catalog';
   import { getManufacturers, searchPublishedCatalog } from '$lib/catalog/search';
   import AppTopbar from '$lib/components/AppTopbar.svelte';
+  import { Badge } from '$lib/components/ui/badge/index.js';
+  import * as Card from '$lib/components/ui/card/index.js';
+  import * as Empty from '$lib/components/ui/empty/index.js';
+  import * as Field from '$lib/components/ui/field/index.js';
+  import { Input } from '$lib/components/ui/input/index.js';
+  import * as Select from '$lib/components/ui/select/index.js';
   import { getMessages } from '$lib/i18n/messages';
   import { readLanguage, readMarket, selectLanguage, selectMarket } from '$lib/preferences';
   import { formatQuantityExample } from '$lib/presentation/number-formatting';
@@ -15,6 +21,7 @@
   const copy = $derived(getMessages(language));
   const marketName = $derived(copy.marketName(market));
   const manufacturers = $derived(getManufacturers(publishedCatalog, market));
+  const selectedManufacturer = $derived(manufacturer || copy.allManufacturers);
   const visibleVariants = $derived(
     searchPublishedCatalog(publishedCatalog, search, market, manufacturer)
   );
@@ -27,6 +34,10 @@
     market = selectMarket(selectedMarket);
     search = '';
     manufacturer = '';
+  }
+
+  function changeManufacturer(selectedValue: string | undefined): void {
+    manufacturer = selectedValue === 'all' ? '' : selectedValue ?? '';
   }
 </script>
 
@@ -61,49 +72,96 @@
     </div>
   </section>
 
-  <section class="catalog-section" aria-labelledby="catalog-title">
-    <div class="section-heading">
+  <section class="py-9 pb-12" aria-labelledby="catalog-title">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p class="eyebrow">{marketName}</p>
-        <h2 id="catalog-title">{copy.catalogTitle}</h2>
+        <h2 id="catalog-title" class="mb-0 text-[2.1rem] tracking-[-0.055em]">{copy.catalogTitle}</h2>
       </div>
-      <p class="catalog-count">{copy.marketVariantCount(visibleVariants.length)}</p>
+      <p class="mb-0.5 text-sm text-muted-foreground">{copy.marketVariantCount(visibleVariants.length)}</p>
     </div>
-    <p class="format-hint field-hint">{copy.quantityFormatHint(formatQuantityExample(market))}</p>
+    <p class="mt-2 mb-5 text-sm text-muted-foreground">
+      {copy.quantityFormatHint(formatQuantityExample(market))}
+    </p>
 
-    <div class="catalog-controls">
-      <label class="search-field">
-        <span class="field-label">{copy.searchLabel}</span>
-        <input bind:value={search} type="search" placeholder={copy.searchPlaceholder} />
-      </label>
+    <Field.Group
+      class="mb-5 gap-4 md:grid md:grid-cols-[minmax(0,2fr)_minmax(12rem,1fr)] md:items-end"
+    >
+      <Field.Field>
+        <Field.Label for="catalog-search">{copy.searchLabel}</Field.Label>
+        <Input
+          id="catalog-search"
+          bind:value={search}
+          type="search"
+          class="min-h-11"
+          placeholder={copy.searchPlaceholder}
+        />
+      </Field.Field>
 
-      <label class="manufacturer-filter">
-        <span class="field-label">{copy.manufacturerFilterLabel}</span>
-        <select bind:value={manufacturer}>
-          <option value="">{copy.allManufacturers}</option>
-          {#each manufacturers as manufacturerOption (manufacturerOption)}
-            <option value={manufacturerOption}>{manufacturerOption}</option>
-          {/each}
-        </select>
-      </label>
-    </div>
+      <Field.Field>
+        <Field.Label for="manufacturer-filter">{copy.manufacturerFilterLabel}</Field.Label>
+        <Select.Root
+          type="single"
+          name="manufacturer"
+          value={manufacturer || 'all'}
+          onValueChange={changeManufacturer}
+        >
+          <Select.Trigger id="manufacturer-filter" class="min-h-11 w-full">
+            {selectedManufacturer}
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Group>
+              <Select.Item value="all" label={copy.allManufacturers}>
+                {copy.allManufacturers}
+              </Select.Item>
+              {#each manufacturers as manufacturerOption (manufacturerOption)}
+                <Select.Item value={manufacturerOption} label={manufacturerOption}>
+                  {manufacturerOption}
+                </Select.Item>
+              {/each}
+            </Select.Group>
+          </Select.Content>
+        </Select.Root>
+      </Field.Field>
+    </Field.Group>
 
     {#if visibleVariants.length > 0}
-      <div class="variant-list">
+      <div class="grid gap-4 md:grid-cols-2">
         {#each visibleVariants as variant (variant.id)}
-          <a class="variant-card card" href={`/product/${variant.id}`}>
-            <div class="variant-card-topline">
-              <span class="variant-category">{variant.translations[language].category}</span>
-              <span class="arrow" aria-hidden="true">↗</span>
-            </div>
-            <h3>{variant.translations[language].name}</h3>
-            <p>{variant.manufacturer} · {variant.productCode}</p>
-            <span class="variant-link">{copy.openCalculator}</span>
+          <a
+            class="group block h-full rounded-[min(var(--radius-4xl),24px)] no-underline outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+            href={`/product/${variant.id}`}
+          >
+            <Card.Root class="h-full transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-lg">
+              <Card.Header>
+                <Badge variant="outline">
+                  {variant.translations[language].category}
+                </Badge>
+                <Card.Action aria-hidden="true">↗</Card.Action>
+                <Card.Title class="col-span-full mt-4">
+                  <h3 class="mb-0 text-xl tracking-tight">
+                    {variant.translations[language].name}
+                  </h3>
+                </Card.Title>
+              </Card.Header>
+              <Card.Content>
+                <Card.Description>
+                  {variant.manufacturer} · {variant.productCode}
+                </Card.Description>
+              </Card.Content>
+              <Card.Footer>
+                <span class="font-medium text-primary">{copy.openCalculator}</span>
+              </Card.Footer>
+            </Card.Root>
           </a>
         {/each}
       </div>
     {:else}
-      <p class="empty-state card">{copy.noResults}</p>
+      <Empty.Root class="border border-dashed border-border px-6 py-10">
+        <Empty.Header>
+          <Empty.Title>{copy.noResults}</Empty.Title>
+        </Empty.Header>
+      </Empty.Root>
     {/if}
   </section>
 
@@ -166,97 +224,6 @@
     background: #f5d2a5;
   }
 
-  .catalog-section {
-    padding: 2.3rem 0 3rem;
-  }
-
-  .section-heading {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.35rem;
-  }
-
-  h2 {
-    margin-bottom: 0;
-    font-size: 2.1rem;
-    letter-spacing: -0.055em;
-  }
-
-  .catalog-count {
-    margin-bottom: 0.2rem;
-    color: var(--muted-foreground);
-    font-size: 0.8rem;
-  }
-
-  .catalog-controls {
-    display: grid;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .search-field,
-  .manufacturer-filter {
-    display: block;
-  }
-
-  .variant-list {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .variant-card {
-    display: block;
-    padding: 1.3rem;
-    text-decoration: none;
-    transition: transform 160ms ease, box-shadow 160ms ease;
-  }
-
-  .variant-card:hover {
-    box-shadow: 0 24px 58px rgba(16, 42, 44, 0.16);
-    transform: translateY(-3px);
-  }
-
-  .variant-card-topline {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .variant-category {
-    color: var(--accent-dark);
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .arrow {
-    font-size: 1.5rem;
-  }
-
-  h3 {
-    margin: 1.5rem 0 0.4rem;
-    font-size: 1.45rem;
-    letter-spacing: -0.04em;
-  }
-
-  .variant-card p {
-    margin-bottom: 1.2rem;
-    color: var(--muted-foreground);
-  }
-
-  .variant-link {
-    color: var(--accent-dark);
-    font-size: 0.9rem;
-    font-weight: 800;
-  }
-
-  .empty-state {
-    padding: 1.25rem;
-  }
-
   .footer {
     padding: 0 0 2rem;
     font-size: 0.78rem;
@@ -274,14 +241,5 @@
       transform: rotate(-6deg);
     }
 
-    .variant-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .catalog-controls {
-      grid-template-columns: minmax(0, 2fr) minmax(12rem, 1fr);
-      max-width: 58rem;
-      align-items: end;
-    }
   }
 </style>
