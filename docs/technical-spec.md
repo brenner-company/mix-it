@@ -61,8 +61,9 @@ its npm package. Vite includes that CSS in the versioned production build, and t
 service worker precaches the resulting same-origin stylesheet with the rest of the
 application release. No stylesheet is loaded from a CDN. Shared page containment
 and primary navigation follow Blades' semantic `container` and `nav` patterns.
-Route-specific scoped styles may remain while catalog and calculator presentation
-move to semantic Blades markup in later slices.
+Catalog discovery uses Blades' semantic `section`, `form`, `grid`, and `article`
+patterns without catalog-specific presentation CSS. Route-specific scoped styles
+may remain while calculator presentation moves to semantic Blades markup.
 
 ## Calculation design
 

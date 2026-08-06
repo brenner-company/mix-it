@@ -28,6 +28,10 @@
     search = '';
     manufacturer = '';
   }
+
+  function preventSearch(event: SubmitEvent): void {
+    event.preventDefault();
+  }
 </script>
 
 <svelte:head>
@@ -48,240 +52,64 @@
     onMarketChange={changeMarket}
   />
 
-  <section class="hero" aria-labelledby="home-title">
-    <div class="hero-copy">
-      <p class="eyebrow">{copy.homeEyebrow}</p>
-      <h1 id="home-title">{copy.homeTitle}</h1>
-      <p class="hero-intro">{copy.homeIntro}</p>
-    </div>
-    <div class="hero-mark" aria-hidden="true">
-      <span>+</span>
-      <span>→</span>
-      <span>●</span>
-    </div>
-  </section>
+  <header>
+    <p>{copy.homeEyebrow}</p>
+    <h1 id="home-title">{copy.homeTitle}</h1>
+    <p>{copy.homeIntro}</p>
+  </header>
 
-  <section class="catalog-section" aria-labelledby="catalog-title">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">{marketName}</p>
-        <h2 id="catalog-title">{copy.catalogTitle}</h2>
+  <section aria-labelledby="catalog-title">
+    <header>
+      <p>{marketName}</p>
+      <h2 id="catalog-title">{copy.catalogTitle}</h2>
+      <p aria-live="polite">{copy.marketVariantCount(visibleVariants.length)}</p>
+    </header>
+    <p>{copy.quantityFormatHint(formatQuantityExample(market))}</p>
+
+    <form role="search" aria-label={copy.catalogTitle} onsubmit={preventSearch}>
+      <div class="grid">
+        <label>
+          {copy.searchLabel}
+          <input bind:value={search} type="search" placeholder={copy.searchPlaceholder} />
+        </label>
+
+        <label>
+          {copy.manufacturerFilterLabel}
+          <select bind:value={manufacturer}>
+            <option value="">{copy.allManufacturers}</option>
+            {#each manufacturers as manufacturerOption (manufacturerOption)}
+              <option value={manufacturerOption}>{manufacturerOption}</option>
+            {/each}
+          </select>
+        </label>
       </div>
-      <p class="catalog-count">{copy.marketVariantCount(visibleVariants.length)}</p>
-    </div>
-    <p class="format-hint field-hint">{copy.quantityFormatHint(formatQuantityExample(market))}</p>
-
-    <div class="catalog-controls">
-      <label class="search-field">
-        <span class="field-label">{copy.searchLabel}</span>
-        <input bind:value={search} type="search" placeholder={copy.searchPlaceholder} />
-      </label>
-
-      <label class="manufacturer-filter">
-        <span class="field-label">{copy.manufacturerFilterLabel}</span>
-        <select bind:value={manufacturer}>
-          <option value="">{copy.allManufacturers}</option>
-          {#each manufacturers as manufacturerOption (manufacturerOption)}
-            <option value={manufacturerOption}>{manufacturerOption}</option>
-          {/each}
-        </select>
-      </label>
-    </div>
+    </form>
 
     {#if visibleVariants.length > 0}
-      <div class="variant-list">
+      <div class="grid">
         {#each visibleVariants as variant (variant.id)}
-          <a class="variant-card card" href={`/product/${variant.id}`}>
-            <div class="variant-card-topline">
-              <span class="variant-category">{variant.translations[language].category}</span>
-              <span class="arrow" aria-hidden="true">↗</span>
-            </div>
-            <h3>{variant.translations[language].name}</h3>
-            <p>{variant.manufacturer} · {variant.productCode}</p>
-            <span class="variant-link">{copy.openCalculator}</span>
-          </a>
+          <article>
+            <header>
+              <p>{variant.translations[language].category}</p>
+              <h3>{variant.translations[language].name}</h3>
+            </header>
+            <p>
+              <strong>{variant.manufacturer}</strong> ·
+              <data value={variant.productCode}>{variant.productCode}</data>
+            </p>
+            <footer>
+              <a
+                href={`/product/${variant.id}`}
+                aria-label={`${copy.openCalculator}: ${variant.translations[language].name}`}
+              >{copy.openCalculator}</a>
+            </footer>
+          </article>
         {/each}
       </div>
     {:else}
-      <p class="empty-state card">{copy.noResults}</p>
+      <p role="status" aria-live="polite">{copy.noResults}</p>
     {/if}
   </section>
 
-  <footer class="footer muted">{copy.footerNote}</footer>
+  <footer><small>{copy.footerNote}</small></footer>
 </main>
-
-<style>
-  .hero {
-    display: grid;
-    gap: 1.4rem;
-    align-items: end;
-    padding: 3.5rem 0 3rem;
-  }
-
-  h1,
-  h2,
-  h3,
-  p {
-    margin-top: 0;
-  }
-
-  h1 {
-    max-width: 15ch;
-    margin-bottom: 1rem;
-    font-size: clamp(3rem, 13vw, 6.9rem);
-    line-height: 0.92;
-    letter-spacing: -0.085em;
-  }
-
-  .hero-intro {
-    max-width: 33rem;
-    margin-bottom: 0;
-    color: var(--pico-muted-color);
-    font-size: 1.08rem;
-    line-height: 1.6;
-  }
-
-  .hero-mark {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    align-items: center;
-    gap: 0.4rem;
-    max-width: 16rem;
-    color: var(--pico-primary);
-    font-size: 2.1rem;
-    text-align: center;
-  }
-
-  .hero-mark span {
-    display: grid;
-    width: 4.5rem;
-    height: 4.5rem;
-    place-items: center;
-    border-radius: 50%;
-    background: var(--pico-card-sectioning-background-color);
-  }
-
-  .hero-mark span:nth-child(2) {
-    color: var(--pico-color);
-    background: #f5d2a5;
-  }
-
-  .catalog-section {
-    padding: 2.3rem 0 3rem;
-  }
-
-  .section-heading {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.35rem;
-  }
-
-  h2 {
-    margin-bottom: 0;
-    font-size: 2.1rem;
-    letter-spacing: -0.055em;
-  }
-
-  .catalog-count {
-    margin-bottom: 0.2rem;
-    color: var(--pico-muted-color);
-    font-size: 0.8rem;
-  }
-
-  .catalog-controls {
-    display: grid;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .search-field,
-  .manufacturer-filter {
-    display: block;
-  }
-
-  .variant-list {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .variant-card {
-    display: block;
-    padding: 1.3rem;
-    text-decoration: none;
-    transition: transform 160ms ease, box-shadow 160ms ease;
-  }
-
-  .variant-card:hover {
-    box-shadow: 0 24px 58px rgba(16, 42, 44, 0.16);
-    transform: translateY(-3px);
-  }
-
-  .variant-card-topline {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .variant-category {
-    color: var(--pico-primary);
-    font-size: 0.76rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .arrow {
-    font-size: 1.5rem;
-  }
-
-  h3 {
-    margin: 1.5rem 0 0.4rem;
-    font-size: 1.45rem;
-    letter-spacing: -0.04em;
-  }
-
-  .variant-card p {
-    margin-bottom: 1.2rem;
-    color: var(--pico-muted-color);
-  }
-
-  .variant-link {
-    color: var(--pico-primary);
-    font-size: 0.9rem;
-    font-weight: 800;
-  }
-
-  .empty-state {
-    padding: 1.25rem;
-  }
-
-  .footer {
-    padding: 0 0 2rem;
-    font-size: 0.78rem;
-  }
-
-  @media (min-width: 44rem) {
-    .hero {
-      grid-template-columns: 1fr auto;
-      min-height: 30rem;
-      padding: 5rem 0 4rem;
-    }
-
-    .hero-mark {
-      max-width: 19rem;
-      transform: rotate(-6deg);
-    }
-
-    .variant-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .catalog-controls {
-      grid-template-columns: minmax(0, 2fr) minmax(12rem, 1fr);
-      max-width: 58rem;
-      align-items: end;
-    }
-  }
-</style>

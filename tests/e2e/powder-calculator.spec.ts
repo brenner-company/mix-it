@@ -328,6 +328,31 @@ test('catalog discovery searches, filters, and hides unreviewed Market Variants'
   await expect(page.getByRole('link', { name: /open calculator/i })).toHaveCount(1);
 });
 
+test('catalog discovery exposes semantic filters and Market Variant identities', async ({ page }) => {
+  await page.goto('/');
+
+  const catalog = page.getByRole('region', { name: 'Catalogus' });
+  const searchRegion = catalog.getByRole('search', {
+    name: 'Catalogus'
+  });
+  const firstResult = catalog.getByRole('article').first();
+
+  await expect(catalog.getByRole('heading', { level: 2, name: 'Catalogus' })).toBeVisible();
+  await expect(searchRegion).toBeVisible();
+  await expect(searchRegion.getByLabel('Zoek op naam, fabrikant, productcode of categorie')).toBeVisible();
+  await expect(searchRegion.getByLabel('Filter op fabrikant')).toBeVisible();
+  await expect(firstResult.getByRole('heading', { level: 3, name: /Knauf/ })).toBeVisible();
+  await expect(firstResult.getByText('Knauf Belgium', { exact: true })).toBeVisible();
+  await expect(firstResult.getByText('P131', { exact: true })).toBeVisible();
+  const calculatorLink = firstResult.getByRole('link', { name: /open calculator.*knauf goldband e/i });
+  await expect(calculatorLink).toHaveAttribute('href', /\/product\//);
+
+  await searchRegion
+    .getByLabel('Zoek op naam, fabrikant, productcode of categorie')
+    .fill('P291');
+  await expect(catalog.getByRole('status')).toHaveText('Geen Market Variants gevonden.');
+});
+
 test('invalid powder input is announced without showing a calculation', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-be');
 
