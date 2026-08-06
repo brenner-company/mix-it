@@ -138,7 +138,7 @@ test('stable Market Variant width and height area state passes an automated acce
   expect(accessibilityScan.violations).toEqual([]);
 });
 
-test('Market Variant reference design attaches successful powder states for desktop and mobile review', async (
+test('Market Variant reference design captures final desktop and mobile review snapshots', async (
   { page },
   testInfo
 ) => {
@@ -149,6 +149,8 @@ test('Market Variant reference design attaches successful powder states for desk
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
   await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
 
+  // Attachments keep the approved reference review available across the supported
+  // browser and operating-system matrix without committing platform-specific pixels.
   const screenshot = await page.screenshot({ fullPage: true });
   await testInfo.attach(`${testInfo.project.name}-market-variant-reference`, {
     body: screenshot,

@@ -44,11 +44,8 @@
   background: var(--background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ink: #102a2c;
   --muted: oklch(0.97 0 0);
   --accent: oklch(0.97 0 0);
-  --accent-dark: #bd4728;
-  --mint: #d7eee5;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -106,34 +103,9 @@ a {
   color: inherit;
 }
 
-.shell {
-  width: min(100% - 2rem, 70rem);
-  margin: 0 auto;
-}
-
-.eyebrow {
-  margin: 0 0 0.65rem;
-  color: var(--accent-dark);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.muted {
-  color: var(--muted-foreground);
-}
-
 a:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
-}
-
-@media (min-width: 44rem) {
-  .shell {
-    width: min(100% - 4rem, 70rem);
-  }
-
 }
 
 @media (prefers-reduced-motion: reduce) {

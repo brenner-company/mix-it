@@ -49,33 +49,47 @@
   />
 </svelte:head>
 
-<main class="shell">
-  <AppTopbar
-    {language}
-    {market}
-    markets={supportedMarkets}
-    {copy}
-    onLanguageChange={changeLanguage}
-    onMarketChange={changeMarket}
-  />
+<AppTopbar
+  {language}
+  {market}
+  markets={supportedMarkets}
+  {copy}
+  onLanguageChange={changeLanguage}
+  onMarketChange={changeMarket}
+/>
 
-  <section class="hero" aria-labelledby="home-title">
-    <div class="hero-copy">
-      <p class="eyebrow">{copy.homeEyebrow}</p>
-      <h1 id="home-title">{copy.homeTitle}</h1>
-      <p class="hero-intro">{copy.homeIntro}</p>
+  <section
+    class="grid items-end gap-6 py-14 pb-12 sm:min-h-[30rem] sm:grid-cols-[1fr_auto] sm:py-20 sm:pb-16"
+    aria-labelledby="home-title"
+  >
+    <div>
+      <p class="mb-[0.65rem] text-xs font-extrabold uppercase tracking-[0.12em] text-primary">
+        {copy.homeEyebrow}
+      </p>
+      <h1
+        id="home-title"
+        class="mb-4 max-w-[15ch] text-[clamp(3rem,13vw,6.9rem)] leading-[0.92] tracking-[-0.085em]"
+      >{copy.homeTitle}</h1>
+      <p class="mb-0 max-w-[33rem] text-[1.08rem] leading-[1.6] text-muted-foreground">
+        {copy.homeIntro}
+      </p>
     </div>
-    <div class="hero-mark" aria-hidden="true">
-      <span>+</span>
-      <span>→</span>
-      <span>●</span>
+    <div
+      class="grid max-w-64 grid-cols-3 items-center gap-1.5 text-center text-[2.1rem] text-primary sm:max-w-[19rem] sm:-rotate-6"
+      aria-hidden="true"
+    >
+      <span class="grid size-[4.5rem] place-items-center rounded-full bg-primary/10">+</span>
+      <span class="grid size-[4.5rem] place-items-center rounded-full bg-secondary text-secondary-foreground">→</span>
+      <span class="grid size-[4.5rem] place-items-center rounded-full bg-primary/10">●</span>
     </div>
   </section>
 
   <section class="py-9 pb-12" aria-labelledby="catalog-title">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <p class="eyebrow">{marketName}</p>
+        <p class="mb-[0.65rem] text-xs font-extrabold uppercase tracking-[0.12em] text-primary">
+          {marketName}
+        </p>
         <h2 id="catalog-title" class="mb-0 text-[2.1rem] tracking-[-0.055em]">{copy.catalogTitle}</h2>
       </div>
       <p class="mb-0.5 text-sm text-muted-foreground">{copy.marketVariantCount(visibleVariants.length)}</p>
@@ -165,81 +179,4 @@
     {/if}
   </section>
 
-  <footer class="footer muted">{copy.footerNote}</footer>
-</main>
-
-<style>
-  .hero {
-    display: grid;
-    gap: 1.4rem;
-    align-items: end;
-    padding: 3.5rem 0 3rem;
-  }
-
-  h1,
-  h2,
-  h3,
-  p {
-    margin-top: 0;
-  }
-
-  h1 {
-    max-width: 15ch;
-    margin-bottom: 1rem;
-    font-size: clamp(3rem, 13vw, 6.9rem);
-    line-height: 0.92;
-    letter-spacing: -0.085em;
-  }
-
-  .hero-intro {
-    max-width: 33rem;
-    margin-bottom: 0;
-    color: var(--muted-foreground);
-    font-size: 1.08rem;
-    line-height: 1.6;
-  }
-
-  .hero-mark {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    align-items: center;
-    gap: 0.4rem;
-    max-width: 16rem;
-    color: var(--accent-dark);
-    font-size: 2.1rem;
-    text-align: center;
-  }
-
-  .hero-mark span {
-    display: grid;
-    width: 4.5rem;
-    height: 4.5rem;
-    place-items: center;
-    border-radius: 50%;
-    background: var(--mint);
-  }
-
-  .hero-mark span:nth-child(2) {
-    color: var(--ink);
-    background: #f5d2a5;
-  }
-
-  .footer {
-    padding: 0 0 2rem;
-    font-size: 0.78rem;
-  }
-
-  @media (min-width: 44rem) {
-    .hero {
-      grid-template-columns: 1fr auto;
-      min-height: 30rem;
-      padding: 5rem 0 4rem;
-    }
-
-    .hero-mark {
-      max-width: 19rem;
-      transform: rotate(-6deg);
-    }
-
-  }
-</style>
+  <footer class="pb-8 text-xs text-muted-foreground">{copy.footerNote}</footer>

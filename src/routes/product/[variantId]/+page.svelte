@@ -300,15 +300,14 @@
   <meta name="description" content={copy.productDescription(translation.name)} />
 </svelte:head>
 
-<main class="shell">
-  <AppTopbar
-    {language}
-    {market}
-    markets={supportedMarkets}
-    {copy}
-    onLanguageChange={changeLanguage}
-    onMarketChange={changeMarket}
-  />
+<AppTopbar
+  {language}
+  {market}
+  markets={supportedMarkets}
+  {copy}
+  onLanguageChange={changeLanguage}
+  onMarketChange={changeMarket}
+/>
 
   <div class="py-8 pb-4">
     <a class="text-sm text-muted-foreground no-underline hover:text-foreground" href="/">
@@ -317,7 +316,9 @@
   </div>
 
   <section class="py-4 pb-8 sm:py-8 sm:pb-12" aria-labelledby="product-title">
-    <p class="eyebrow">{translation.category} · {variant.market} · {variant.productCode}</p>
+    <p class="mb-[0.65rem] text-xs font-extrabold uppercase tracking-[0.12em] text-primary">
+      {translation.category} · {variant.market} · {variant.productCode}
+    </p>
     <h1
       id="product-title"
       class="mb-3 max-w-[14ch] text-[clamp(2.8rem,12vw,5.5rem)] leading-[0.94] tracking-[-0.08em]"
@@ -332,7 +333,9 @@
       class="grid gap-8 p-4 sm:grid-cols-[0.85fr_1.15fr] sm:gap-10 sm:p-8"
     >
       <Card.Header class="gap-3 px-0 py-0 sm:py-2.5">
-        <p class="eyebrow">{copy.calculatorEyebrow}</p>
+        <p class="mb-[0.65rem] text-xs font-extrabold uppercase tracking-[0.12em] text-primary">
+          {copy.calculatorEyebrow}
+        </p>
         <Card.Title>
           <h2 id="calculator-title" class="mb-0 text-3xl tracking-tight">{copy.calculatorTitle}</h2>
         </Card.Title>
@@ -432,4 +435,3 @@
   </section>
 
   <CatalogReviewTraceability {variant} {copy} />
-</main>

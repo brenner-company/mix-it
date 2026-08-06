@@ -43,7 +43,7 @@ localization.
 | Application | SvelteKit, Svelte, strict TypeScript | A compact component model with routing, static generation, and first-class service-worker support |
 | Build | Vite and `@sveltejs/adapter-static` | Produces deployable static assets without a production server |
 | Offline installation | SvelteKit service worker and a web app manifest | Keeps offline behaviour and cache versioning explicit |
-| Styling | Tailwind CSS v4 with source-owned shadcn-svelte primitives and semantic tokens | Provides a compact, accessible component vocabulary while allowing legacy route styling to be migrated incrementally |
+| Styling | Tailwind CSS v4 with source-owned shadcn-svelte primitives and semantic tokens | Provides the compact, accessible presentation vocabulary for all product-facing controls and composition |
 | Catalog validation | Versioned JSON validated with Zod during development and CI | Makes catalog errors fail before publication and shares types with the application |
 | Localization | Paraglide JS | Keeps Dutch and English messages compile-time checked and shipped with the application |
 | Number presentation | `Intl.NumberFormat` | Uses the selected Market's conventions without coupling Market to Language |
@@ -107,7 +107,24 @@ Each deployment uses a new service-worker cache version. Installation should
 populate the complete application and catalog cache before activating it, and
 activation should remove obsolete caches. An interrupted update therefore leaves
 the previous complete release usable rather than combining files from two
-catalog versions.
+catalog versions. Source-owned shadcn-svelte primitives and generated Tailwind
+CSS are application assets in that same atomic release; presentation dependencies
+must not introduce a runtime service or a separately versioned cache.
+
+## Presentation boundary
+
+Tailwind utilities and composition from `src/lib/components/ui` are the default
+for product-facing controls and layout. Generic primitives stay close to their
+upstream shadcn-svelte registry implementation, while Market Variant, catalog,
+calculator, and preference concepts remain in domain-oriented components outside
+the generic UI layer.
+
+Custom CSS in `src/app.css` is limited to semantic theme tokens, document/base
+behavior, focus and reduced-motion accessibility behavior, and structural rules
+that Tailwind cannot express clearly. Route-scoped styling is not used for
+colors, typography, routine spacing, responsive layout, borders, shadows, or
+control appearance. This boundary keeps the static PWA presentation explicit and
+ensures new UI work uses the same inspectable source-owned vocabulary.
 
 ## Verification strategy
 
