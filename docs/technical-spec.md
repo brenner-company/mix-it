@@ -57,15 +57,16 @@ Exact dependency and runtime versions belong in `package.json` and the lockfile,
 not in this document.
 
 The root application stylesheet imports the full precompiled Blades artifact from
-its npm package. Vite includes that CSS in the versioned production build, and the
-service worker precaches the resulting same-origin stylesheet with the rest of the
-application release. No stylesheet is loaded from a CDN. Shared page containment
-and primary navigation follow Blades' semantic `container` and `nav` patterns.
-Catalog discovery uses Blades' semantic `section`, `form`, `grid`, and `article`
-patterns without catalog-specific presentation CSS. The Market Variant powder
-journey and area journey use semantic `article`, `form`, `group`, `section`, and
-`aside` patterns. Route-specific styles are limited to functional responsive
-layout that Blades does not provide.
+the npm package. Vite bundles that CSS into the versioned production build, and
+the service worker precaches the resulting same-origin stylesheet with the rest of
+the application release. No stylesheet is loaded from a CDN. Shared page
+containment and primary navigation follow Blades' semantic `container` and `nav`
+patterns. Catalog discovery uses Blades' semantic `section`, `form`, `grid`, and
+`article` patterns without catalog-specific presentation CSS. The Market Variant
+powder journey and area journey use semantic `article`, `form`, `group`,
+`section`, and `aside` patterns. The current release contains no route-specific
+stylesheet; its application presentation comes from the bundled Blades
+foundation.
 
 ## Calculation design
 

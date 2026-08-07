@@ -1,6 +1,21 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { RELEASE_CACHE_PREFIX } from '../../src/lib/offline-release';
+
+function powderResult(page: Page) {
+  return page.getByRole('article', { name: /^(?:Benodigde vloeistof|Required liquid)$/ });
+}
+
+function areaResult(page: Page) {
+  return page.getByRole('article', { name: /^(?:Berekening voor oppervlakte|Area calculation)$/ });
+}
+
+async function assertOfflineCatalogPresentation(page: Page): Promise<void> {
+  await page.getByLabel('Markt').selectOption('UK');
+  await page.getByLabel('Taal').selectOption('en');
+  await expect(page.getByRole('heading', { name: 'Catalog' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Knauf Multi Finish/ })).toBeVisible();
+}
 
 test('production output exposes installable metadata and a complete release cache', async ({ page }) => {
   const manifestResponse = await page.request.get('/manifest.webmanifest');
@@ -36,15 +51,14 @@ test('production output exposes installable metadata and a complete release cach
     bundledStylesheets.every((stylesheet) => stylesheet.origin === new URL(page.url()).origin)
   ).toBe(true);
 
-  const articlePaddingBlockStart = await page.evaluate(() => {
-    const article = document.createElement('article');
-    article.textContent = 'Blades semantic foundation';
-    document.body.append(article);
-    const paddingBlockStart = getComputedStyle(article).paddingBlockStart;
-    article.remove();
-    return paddingBlockStart;
-  });
-  expect(Number.parseFloat(articlePaddingBlockStart)).toBeGreaterThan(0);
+  const stylesheetResponses = await Promise.all(
+    bundledStylesheets.map((stylesheet) => page.request.get(stylesheet.pathname))
+  );
+  expect(stylesheetResponses.every((response) => response.ok())).toBe(true);
+  const stylesheetSources = await Promise.all(
+    stylesheetResponses.map((response) => response.text())
+  );
+  expect(stylesheetSources.some((source) => source.includes('--pico-font-family'))).toBe(true);
 
   const release = await page.evaluate(async (cachePrefix) => {
     const keys = await caches.keys();
@@ -86,11 +100,12 @@ test('mobile user can calculate liquid for a reviewed Market Variant', async ({ 
   await page.getByLabel('Poedermassa').fill('12,5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
 
-  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
-  await expect(page.getByTestId('calculation-result')).toContainText('12,5 kg');
+  const result = powderResult(page);
+  await expect(result).toContainText('8,0 L');
+  await expect(result).toContainText('12,5 kg');
   await page.getByLabel('Poedermassa').fill('12.5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
-  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+  await expect(result).toContainText('8,0 L');
   await expect(page.getByText('Strooi een zak van 25 kg')).toBeVisible();
   await expect(page.getByText('Enkele minuten', { exact: true })).toBeVisible();
   await expect(page.getByText('Ongeveer 2,5 tot 3 uur')).toBeVisible();
@@ -143,7 +158,7 @@ test('mobile user can calculate powder and liquid for a direct area', async ({ p
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
-  const result = page.getByTestId('area-calculation-result');
+  const result = areaResult(page);
   await expect(result).toContainText('Benodigd poeder');
   await expect(result).toContainText('88 kg');
   await expect(result).toContainText('Benodigde vloeistof');
@@ -168,17 +183,18 @@ test('area calculator accepts mixed dimensions and preserves both area entry mod
 
   await page.getByRole('textbox', { name: 'Breedte', exact: true }).fill('4');
   await page.getByRole('textbox', { name: 'Hoogte', exact: true }).fill('250');
-  await page.locator('#height-unit').selectOption('cm');
+  const heightUnit = page.getByRole('group', { name: 'Eenheid van de hoogte' }).getByRole('combobox');
+  await heightUnit.selectOption('cm');
   await page.getByLabel('Laagdikte').fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
-  const result = page.getByTestId('area-calculation-result');
+  const result = areaResult(page);
   await expect(result).toContainText('88 kg');
   await expect(result).toContainText('56,3 L');
   await expect(result).toContainText('10 m²');
   await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
   await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
-  await expect(page.locator('#height-unit')).toHaveValue('cm');
+  await expect(heightUnit).toHaveValue('cm');
 
   await page.getByRole('button', { name: 'Rechtstreekse oppervlakte' }).click();
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
@@ -189,7 +205,7 @@ test('area calculator accepts mixed dimensions and preserves both area entry mod
   await page.getByRole('button', { name: 'Breedte en hoogte' }).click();
   await expect(page.getByRole('textbox', { name: 'Breedte', exact: true })).toHaveValue('4');
   await expect(page.getByRole('textbox', { name: 'Hoogte', exact: true })).toHaveValue('250');
-  await expect(page.locator('#height-unit')).toHaveValue('cm');
+  await expect(heightUnit).toHaveValue('cm');
   await expect(result).toContainText('88 kg');
 
   await page.getByRole('button', { name: 'Poedermassa' }).click();
@@ -214,12 +230,12 @@ test('incomplete dimensions are announced without showing a misleading result', 
   await height.fill('2,5');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
-  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+  await expect(areaResult(page)).toContainText('88 kg');
   await height.fill('');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
   await expect(page.getByRole('alert')).toHaveText('Voer een positieve breedte en hoogte in.');
-  await expect(page.getByTestId('area-calculation-result')).toHaveCount(0);
+  await expect(areaResult(page)).toHaveCount(0);
   await expect(width).toHaveAttribute('aria-invalid', 'false');
   await expect(height).toHaveAttribute('aria-invalid', 'true');
 });
@@ -228,7 +244,7 @@ test('editing shared area assumptions clears results for both entry modes', asyn
   await page.goto('/product/knauf-goldband-e-be');
 
   await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
-  const result = page.getByTestId('area-calculation-result');
+  const result = areaResult(page);
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
@@ -249,7 +265,7 @@ test('calculator mode and area inputs persist through a reload', async ({ page }
   await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
-  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+  await expect(areaResult(page)).toContainText('88 kg');
 
   await page.reload();
 
@@ -258,7 +274,7 @@ test('calculator mode and area inputs persist through a reload', async ({ page }
     'true'
   );
   await expect(page.getByRole('textbox', { name: 'Oppervlakte', exact: true })).toHaveValue('10');
-  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
+  await expect(areaResult(page)).toContainText('88 kg');
 });
 
 test('dimension entry fits a touch-sized viewport without horizontal scrolling', async ({ page }) => {
@@ -280,7 +296,7 @@ test('keyboard users can submit the powder calculator without pointer interactio
   await expect(calculate).toBeFocused();
   await page.keyboard.press('Enter');
 
-  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+  await expect(powderResult(page)).toContainText('8,0 L');
 });
 
 test('area mode warns when layer thickness is outside manufacturer guidance', async ({ page }) => {
@@ -293,7 +309,7 @@ test('area mode warns when layer thickness is outside manufacturer guidance', as
 
   await expect(page.getByRole('alert')).toContainText('buiten de richtlijnen van de fabrikant');
   await expect(page.getByRole('alert')).toContainText('5–25 mm');
-  await expect(page.getByTestId('area-calculation-result')).toContainText('264 kg');
+  await expect(areaResult(page)).toContainText('264 kg');
 });
 
 test('reviewed initial Market Variants expose calculator modes justified by their Source Documents', async ({ page }) => {
@@ -306,7 +322,7 @@ test('reviewed initial Market Variants expose calculator modes justified by thei
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('1');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
 
-  const result = page.getByTestId('area-calculation-result');
+  const result = areaResult(page);
   await expect(result).toContainText('20,13 kg');
   await expect(result).toContainText('5,4 L');
   await expect(page.getByText('Strooi een zak van 25 kg in ongeveer 6,7 liter')).toBeVisible();
@@ -320,7 +336,7 @@ test('MiXem Basic exposes reviewed powder and area calculations with source timi
 
   await page.getByLabel('Poedermassa').fill('12,5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
-  await expect(page.getByTestId('calculation-result')).toContainText('2.350 ml');
+  await expect(powderResult(page)).toContainText('2.350 ml');
   await expect(page.getByText('Voeg ongeveer 4,7 liter zuiver leidingwater')).toBeVisible();
   await expect(page.getByText('3 tot 4 minuten', { exact: true })).toBeVisible();
   await expect(page.getByText('Niet vermeld in de technische fiche.')).toBeVisible();
@@ -331,8 +347,8 @@ test('MiXem Basic exposes reviewed powder and area calculations with source timi
   await expect(page.getByLabel('Laagdikte')).toHaveValue('15');
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('1');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
-  await expect(page.getByTestId('area-calculation-result')).toContainText('25,41 kg');
-  await expect(page.getByTestId('area-calculation-result')).toContainText('4.780 ml');
+  await expect(areaResult(page)).toContainText('25,41 kg');
+  await expect(areaResult(page)).toContainText('4.780 ml');
 });
 
 test('catalog discovery searches, filters, and hides unreviewed Market Variants', async ({ page }) => {
@@ -396,7 +412,7 @@ test('invalid powder input is announced without showing a calculation', async ({
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
 
   await expect(page.getByRole('alert')).toHaveText('Voer een positieve poedermassa in, bijvoorbeeld 12,5.');
-  await expect(page.getByTestId('calculation-result')).toHaveCount(0);
+  await expect(powderResult(page)).toHaveCount(0);
   await expect(powderInput).toHaveAttribute('aria-invalid', 'true');
 });
 
@@ -483,11 +499,11 @@ test('changing Market clears a previously calculated area result', async ({ page
   await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
-  await expect(page.getByTestId('area-calculation-result')).toBeVisible();
+  await expect(areaResult(page)).toBeVisible();
 
   await page.getByLabel('Markt').selectOption('UK');
   await expect(page).toHaveURL(/\/product\/knauf-goldband-e-uk$/);
-  await expect(page.getByTestId('area-calculation-result')).toHaveCount(0);
+  await expect(areaResult(page)).toHaveCount(0);
 });
 
 test('UK Market accepts comma and point input and formats liquid thresholds', async ({ page }) => {
@@ -497,7 +513,7 @@ test('UK Market accepts comma and point input and formats liquid thresholds', as
 
   const powder = page.getByLabel('Powder mass');
   const calculate = page.getByRole('button', { name: /calculate liquid/i });
-  const result = page.getByTestId('calculation-result');
+  const result = powderResult(page);
 
   await powder.fill('1');
   await calculate.click();
@@ -516,18 +532,18 @@ test('UK Market accepts comma and point input and formats liquid thresholds', as
   await page.getByRole('button', { name: 'Area to cover' }).click();
   await page.getByRole('textbox', { name: 'Area', exact: true }).fill('10,0');
   await page.getByRole('button', { name: /calculate powder and liquid/i }).click();
-  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
-  await expect(page.getByTestId('area-calculation-result')).toContainText('40.5 L');
+  await expect(areaResult(page)).toContainText('88 kg');
+  await expect(areaResult(page)).toContainText('40.5 L');
   await page.getByRole('textbox', { name: 'Area', exact: true }).fill('10.0');
   await page.getByRole('button', { name: /calculate powder and liquid/i }).click();
-  await expect(page.getByTestId('area-calculation-result')).toContainText('40.5 L');
+  await expect(areaResult(page)).toContainText('40.5 L');
 });
 
 test('installed catalog and calculator work offline', async ({ page, context }) => {
   await page.goto('/product/knauf-goldband-e-be');
   await page.getByLabel('Poedermassa').fill('12,5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
-  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+  await expect(powderResult(page)).toContainText('8,0 L');
   await page.evaluate(async () => {
     if ('serviceWorker' in navigator) await navigator.serviceWorker.ready;
   });
@@ -550,12 +566,13 @@ test('installed catalog and calculator work offline', async ({ page, context }) 
     await expect(webkitCatalogPage!.getByRole('link', { name: /Knauf MiXem Basic/ })).toBeVisible();
     await page.getByLabel('Poedermassa').fill('12,5');
     await page.getByRole('button', { name: /bereken vloeistof/i }).click();
-    await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+    await expect(powderResult(page)).toContainText('8,0 L');
     await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
     await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
     await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
-    await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
-    await expect(page.getByTestId('area-calculation-result')).toContainText('56,3 L');
+    await expect(areaResult(page)).toContainText('88 kg');
+    await expect(areaResult(page)).toContainText('56,3 L');
+    await assertOfflineCatalogPresentation(webkitCatalogPage!);
     await webkitCatalogPage!.close();
     return;
   }
@@ -566,7 +583,7 @@ test('installed catalog and calculator work offline', async ({ page, context }) 
   await expect(page.getByLabel('Poedermassa')).toHaveValue('12,5');
   await page.getByLabel('Poedermassa').fill('12,5');
   await page.getByRole('button', { name: /bereken vloeistof/i }).click();
-  await expect(page.getByTestId('calculation-result')).toContainText('8,0 L');
+  await expect(powderResult(page)).toContainText('8,0 L');
 
   await page.goto('/');
   await page.getByLabel('Zoek op naam, fabrikant, productcode of categorie').fill('P252');
@@ -576,8 +593,10 @@ test('installed catalog and calculator work offline', async ({ page, context }) 
   await page.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
   await page.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
   await page.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
-  await expect(page.getByTestId('area-calculation-result')).toContainText('88 kg');
-  await expect(page.getByTestId('area-calculation-result')).toContainText('56,3 L');
+  await expect(areaResult(page)).toContainText('88 kg');
+  await expect(areaResult(page)).toContainText('56,3 L');
+  await page.goto('/');
+  await assertOfflineCatalogPresentation(page);
 });
 
 test.describe('browser Market defaults', () => {

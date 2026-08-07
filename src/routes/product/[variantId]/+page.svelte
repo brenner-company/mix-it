@@ -502,13 +502,13 @@
     {/if}
 
     {#if calculatorMode === 'powder' && liquid !== null}
-      <article aria-live="polite" data-testid="calculation-result">
-        <header><p>{copy.resultTitle}</p></header>
+      <article aria-labelledby="powder-result-title" aria-live="polite">
+        <header><h3 id="powder-result-title">{copy.resultTitle}</h3></header>
         <p><strong>{formatLiquidQuantity(liquid, market)}</strong></p>
         <p>{copy.enteredPowder}: <strong>{enteredPowderDisplay} kg</strong></p>
       </article>
     {:else if calculatorMode === 'area' && areaCalculation !== null}
-      <article aria-labelledby="area-result-title" aria-live="polite" data-testid="area-calculation-result">
+      <article aria-labelledby="area-result-title" aria-live="polite">
         <header><h3 id="area-result-title">{copy.areaResultTitle}</h3></header>
         <dl>
           <div>
