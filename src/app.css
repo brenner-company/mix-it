@@ -1,15 +1,1 @@
 @import '../node_modules/@anyblades/blades/css/blades.css';
-
-.field-label {
-  display: block;
-  margin-bottom: 0.45rem;
-  font-size: 0.86rem;
-  font-weight: 750;
-}
-
-.field-hint {
-  margin: 0.45rem 0 0;
-  color: var(--pico-muted-color);
-  font-size: 0.8rem;
-  line-height: 1.45;
-}

@@ -113,6 +113,25 @@ test('Market Variant powder journey exposes semantic calculator and traceability
   await expect(page.getByText('Source Document', { exact: true })).toBeVisible();
 });
 
+test('Market Variant area journey exposes semantic entry and result landmarks', async ({ page }) => {
+  await page.goto('/product/knauf-goldband-e-be');
+
+  const calculator = page.getByRole('article', { name: 'Hoeveel vloeistof heb je nodig?' });
+  await calculator.getByRole('button', { name: 'Oppervlakte bedekken' }).click();
+
+  const areaForm = calculator.getByRole('form');
+  await expect(areaForm).toBeVisible();
+  await expect(areaForm.getByRole('group', { name: 'Oppervlakte invoeren' })).toBeVisible();
+  await areaForm.getByRole('textbox', { name: 'Oppervlakte', exact: true }).fill('10');
+  await areaForm.getByRole('button', { name: /Bereken poeder en vloeistof/i }).click();
+
+  await expect(calculator.getByRole('article', { name: 'Berekening voor oppervlakte' })).toContainText(
+    '88 kg'
+  );
+  await expect(calculator.getByRole('region', { name: 'Menginstructies' })).toBeVisible();
+  await expect(calculator.getByRole('complementary')).toContainText('Let op');
+});
+
 test('mobile user can calculate powder and liquid for a direct area', async ({ page }) => {
   await page.goto('/product/knauf-goldband-e-be');
 
@@ -201,6 +220,7 @@ test('incomplete dimensions are announced without showing a misleading result', 
 
   await expect(page.getByRole('alert')).toHaveText('Voer een positieve breedte en hoogte in.');
   await expect(page.getByTestId('area-calculation-result')).toHaveCount(0);
+  await expect(width).toHaveAttribute('aria-invalid', 'false');
   await expect(height).toHaveAttribute('aria-invalid', 'true');
 });
 

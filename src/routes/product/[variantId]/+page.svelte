@@ -40,6 +40,13 @@
   let { data }: PageProps = $props();
   const variant = $derived(data.variant);
 
+  type AreaInputError = 'area' | 'dimensions' | 'width' | 'height' | 'thickness' | 'wasteMargin';
+  type AreaInputValues = {
+    areaSquareMetres: number;
+    thicknessMm: number;
+    wasteMargin: number;
+  };
+
   function readInitialCalculatorState(): ReturnType<typeof readCalculatorState> {
     return readCalculatorState(data.variant.id);
   }
@@ -83,6 +90,7 @@
   );
   let wasteMarginInput = $state(savedCalculatorState?.wasteMarginInput ?? '10');
   let areaValidationMessage = $state('');
+  let areaValidationError = $state<AreaInputError | null>(null);
   let directAreaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
   let dimensionsAreaCalculation = $state<ReturnType<typeof calculateAreaRequirements> | null>(null);
 
@@ -147,6 +155,7 @@
   function selectAreaInputMode(mode: 'direct' | 'dimensions'): void {
     areaInputMode = mode;
     areaValidationMessage = '';
+    areaValidationError = null;
   }
 
   function changeThickness(event: Event): void {
@@ -157,12 +166,14 @@
   function clearActiveAreaState(): void {
     clearActiveAreaCalculation();
     areaValidationMessage = '';
+    areaValidationError = null;
   }
 
   function clearAllAreaState(): void {
     directAreaCalculation = null;
     dimensionsAreaCalculation = null;
     areaValidationMessage = '';
+    areaValidationError = null;
   }
 
   function clearCalculatorStateForMarketChange(): void {
@@ -197,13 +208,6 @@
     submittedPowderInput = powderInput;
   }
 
-  type AreaInputError = 'area' | 'dimensions' | 'thickness' | 'wasteMargin';
-  type AreaInputValues = {
-    areaSquareMetres: number;
-    thicknessMm: number;
-    wasteMargin: number;
-  };
-
   function parseAreaInputValues(mode: AreaInputMode):
     | { values: AreaInputValues }
     | { error: AreaInputError } {
@@ -228,7 +232,10 @@
 
     const parsedWidth = parseMetricInput(widthInput);
     const parsedHeight = parseMetricInput(heightInput);
-    if (parsedWidth === null || parsedHeight === null) return { error: 'dimensions' };
+    if (parsedWidth === null || parsedHeight === null) {
+      if (parsedWidth === null && parsedHeight === null) return { error: 'dimensions' };
+      return { error: parsedWidth === null ? 'width' : 'height' };
+    }
 
     return {
       values: {
@@ -267,9 +274,12 @@
     const parsed = parseAreaInputValues(areaInputMode);
     if ('error' in parsed) {
       clearActiveAreaCalculation();
+      areaValidationError = parsed.error;
       areaValidationMessage = {
         area: copy.invalidArea,
         dimensions: copy.invalidDimensions,
+        width: copy.invalidDimensions,
+        height: copy.invalidDimensions,
         thickness: copy.invalidThickness,
         wasteMargin: copy.invalidWasteMargin
       }[parsed.error];
@@ -277,6 +287,7 @@
     }
 
     areaValidationMessage = '';
+    areaValidationError = null;
     const calculation = calculateAreaForMode(areaInputMode);
     if (!calculation) return;
 
@@ -342,7 +353,7 @@
     </div>
 
     {#if !areaAvailable}
-      <p class="area-unavailable" role="status">{copy.areaUnavailable}</p>
+      <p role="status">{copy.areaUnavailable}</p>
     {/if}
 
     {#if calculatorMode === 'powder'}
@@ -365,50 +376,49 @@
         <button type="submit">{copy.calculate} <span aria-hidden="true">→</span></button>
       </form>
     {:else if areaAvailable}
-      <form onsubmit={calculateArea} novalidate>
-        <div class="mode-selector area-input-mode-selector" role="group" aria-label={copy.areaInputModeLabel}>
+      <form onsubmit={calculateArea} aria-label={copy.areaMode} novalidate>
+        <div role="group" aria-label={copy.areaInputModeLabel}>
           <button
             type="button"
-            class={areaInputMode === 'direct' ? 'mode-button mode-active' : 'mode-button'}
             aria-pressed={areaInputMode === 'direct'}
             onclick={() => selectAreaInputMode('direct')}
           >{copy.directAreaMode}</button>
           <button
             type="button"
-            class={areaInputMode === 'dimensions' ? 'mode-button mode-active' : 'mode-button'}
             aria-pressed={areaInputMode === 'dimensions'}
             onclick={() => selectAreaInputMode('dimensions')}
           >{copy.dimensionsMode}</button>
         </div>
 
         {#if areaInputMode === 'direct'}
-          <label for="area" class="field-label">{copy.areaLabel}</label>
-          <div class="input-with-unit">
-            <input
-              id="area"
-              bind:value={areaInput}
-              oninput={clearActiveAreaState}
-              aria-describedby="area-hint area-error"
-              aria-invalid={areaValidationMessage ? 'true' : 'false'}
-              inputmode="decimal"
-              autocomplete="off"
-              type="text"
-              placeholder={language === 'nl' ? '2,5' : '2.5'}
-            />
-            <span aria-hidden="true">m²</span>
-          </div>
-          <p id="area-hint" class="field-hint">{copy.areaHint}</p>
+          <label for="area">{copy.areaLabel} <span aria-hidden="true">(m²)</span></label>
+          <input
+            id="area"
+            bind:value={areaInput}
+            oninput={clearActiveAreaState}
+            aria-describedby="area-hint area-error"
+            aria-invalid={areaValidationError === 'area' ? 'true' : 'false'}
+            inputmode="decimal"
+            autocomplete="off"
+            type="text"
+            placeholder={language === 'nl' ? '2,5' : '2.5'}
+          />
+          <small id="area-hint">{copy.areaHint}</small>
         {:else}
-          <div class="dimensions-grid">
-            <div class="dimension-field">
-              <label for="width" class="field-label">{copy.widthLabel}</label>
-              <div class="dimension-input-row">
+          <div class="grid">
+            <div>
+              <label for="width">{copy.widthLabel}</label>
+              <div role="group" aria-label={copy.widthUnitLabel}>
                 <input
                   id="width"
                   bind:value={widthInput}
                   oninput={clearActiveAreaState}
                   aria-describedby="dimensions-hint area-error"
-                  aria-invalid={areaValidationMessage ? 'true' : 'false'}
+                  aria-invalid={
+                    areaValidationError === 'width' || areaValidationError === 'dimensions'
+                      ? 'true'
+                      : 'false'
+                  }
                   inputmode="decimal"
                   autocomplete="off"
                   type="text"
@@ -426,15 +436,19 @@
               </div>
             </div>
 
-            <div class="dimension-field">
-              <label for="height" class="field-label">{copy.heightLabel}</label>
-              <div class="dimension-input-row">
+            <div>
+              <label for="height">{copy.heightLabel}</label>
+              <div role="group" aria-label={copy.heightUnitLabel}>
                 <input
                   id="height"
                   bind:value={heightInput}
                   oninput={clearActiveAreaState}
                   aria-describedby="dimensions-hint area-error"
-                  aria-invalid={areaValidationMessage ? 'true' : 'false'}
+                  aria-invalid={
+                    areaValidationError === 'height' || areaValidationError === 'dimensions'
+                      ? 'true'
+                      : 'false'
+                  }
                   inputmode="decimal"
                   autocomplete="off"
                   type="text"
@@ -452,42 +466,36 @@
               </div>
             </div>
           </div>
-          <p id="dimensions-hint" class="field-hint">{copy.dimensionsHint}</p>
+          <small id="dimensions-hint">{copy.dimensionsHint}</small>
         {/if}
 
-        <label for="thickness" class="field-label">{copy.thicknessLabel}</label>
-        <div class="input-with-unit">
-          <input
-            id="thickness"
-            value={displayedThickness}
-            oninput={changeThickness}
-            aria-describedby="thickness-hint area-error"
-            aria-invalid={areaValidationMessage ? 'true' : 'false'}
-            inputmode="decimal"
-            autocomplete="off"
-            type="text"
-          />
-          <span aria-hidden="true">mm</span>
-        </div>
-        <p id="thickness-hint" class="field-hint">{copy.thicknessHint}</p>
+        <label for="thickness">{copy.thicknessLabel} <span aria-hidden="true">(mm)</span></label>
+        <input
+          id="thickness"
+          value={displayedThickness}
+          oninput={changeThickness}
+          aria-describedby="thickness-hint area-error"
+          aria-invalid={areaValidationError === 'thickness' ? 'true' : 'false'}
+          inputmode="decimal"
+          autocomplete="off"
+          type="text"
+        />
+        <small id="thickness-hint">{copy.thicknessHint}</small>
 
-        <label for="waste-margin" class="field-label">{copy.wasteMarginLabel}</label>
-        <div class="input-with-unit">
-          <input
-            id="waste-margin"
-            bind:value={wasteMarginInput}
-            oninput={clearAllAreaState}
-            aria-describedby="waste-margin-hint area-error"
-            aria-invalid={areaValidationMessage ? 'true' : 'false'}
-            inputmode="decimal"
-            autocomplete="off"
-            type="text"
-          />
-          <span aria-hidden="true">%</span>
-        </div>
-        <p id="waste-margin-hint" class="field-hint">{copy.wasteMarginHint}</p>
+        <label for="waste-margin">{copy.wasteMarginLabel} <span aria-hidden="true">(%)</span></label>
+        <input
+          id="waste-margin"
+          bind:value={wasteMarginInput}
+          oninput={clearAllAreaState}
+          aria-describedby="waste-margin-hint area-error"
+          aria-invalid={areaValidationError === 'wasteMargin' ? 'true' : 'false'}
+          inputmode="decimal"
+          autocomplete="off"
+          type="text"
+        />
+        <small id="waste-margin-hint">{copy.wasteMarginHint}</small>
         {#if areaValidationMessage}
-          <p id="area-error" class="error-message" role="alert">{areaValidationMessage}</p>
+          <p id="area-error" role="alert">{areaValidationMessage}</p>
         {/if}
         <button type="submit">{copy.calculateArea} <span aria-hidden="true">→</span></button>
       </form>
@@ -500,19 +508,17 @@
         <p>{copy.enteredPowder}: <strong>{enteredPowderDisplay} kg</strong></p>
       </article>
     {:else if calculatorMode === 'area' && areaCalculation !== null}
-      <div class="calculation-result area-calculation-result" aria-live="polite" data-testid="area-calculation-result">
-        <p class="result-label">{copy.areaResultTitle}</p>
-        <div class="area-quantities">
+      <article aria-labelledby="area-result-title" aria-live="polite" data-testid="area-calculation-result">
+        <header><h3 id="area-result-title">{copy.areaResultTitle}</h3></header>
+        <dl>
           <div>
-            <p class="quantity-label">{copy.requiredPowder}</p>
-            <p class="powder-value">{formatPowderQuantity(areaCalculation.requiredPowderKg, market)}</p>
+            <dt>{copy.requiredPowder}</dt>
+            <dd><strong>{formatPowderQuantity(areaCalculation.requiredPowderKg, market)}</strong></dd>
           </div>
           <div>
-            <p class="quantity-label">{copy.requiredLiquid}</p>
-            <p class="liquid-value">{formatLiquidQuantity(areaCalculation.requiredLiquidLitres, market)}</p>
+            <dt>{copy.requiredLiquid}</dt>
+            <dd><strong>{formatLiquidQuantity(areaCalculation.requiredLiquidLitres, market)}</strong></dd>
           </div>
-        </div>
-        <dl class="assumptions-list">
           <div>
             <dt>{copy.areaAssumptionArea}</dt>
             <dd>{formatMetricNumber(areaCalculation.assumptions.areaSquareMetres, market)} m²</dd>
@@ -531,14 +537,14 @@
           </div>
         </dl>
         {#if areaCalculation.outsideSupportedThicknessRange}
-          <p class="range-warning" role="alert">
+          <p role="alert">
             {copy.outsideGuidance(
               formatMetricNumber(variant.supportedThicknessRange.minMm, market),
               formatMetricNumber(variant.supportedThicknessRange.maxMm, market)
             )}
           </p>
         {/if}
-      </div>
+      </article>
     {/if}
 
     {#if showGuidance}
@@ -586,180 +592,3 @@
     </aside>
   </section>
 </main>
-
-<style>
-  .mode-selector {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem;
-    padding: 0.35rem;
-    border-radius: 0.9rem;
-    background: #f5f0e8;
-  }
-
-  .mode-button {
-    min-height: 2.8rem;
-    margin: 0;
-    color: var(--pico-color);
-    background: transparent;
-  }
-
-  .mode-button:hover,
-  .mode-button.mode-active {
-    color: var(--pico-color);
-    background: var(--pico-card-background-color);
-  }
-
-  .mode-button.mode-active {
-    box-shadow: 0 0.2rem 0.65rem rgba(16, 42, 44, 0.1);
-  }
-
-  .mode-button:disabled {
-    color: var(--pico-muted-color);
-    background: transparent;
-    cursor: not-allowed;
-    opacity: 0.65;
-  }
-
-  .area-input-mode-selector {
-    margin-bottom: 0.35rem;
-  }
-
-  .area-unavailable {
-    margin: 0;
-    padding: 0.85rem 1rem;
-    border-left: 4px solid var(--pico-muted-border-color);
-    color: var(--pico-muted-color);
-    font-size: 0.86rem;
-    line-height: 1.5;
-  }
-
-  .dimensions-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .dimension-input-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 8rem);
-    gap: 0.55rem;
-  }
-
-  .dimension-input-row select {
-    min-width: 0;
-    padding-right: 0.55rem;
-    padding-left: 0.55rem;
-  }
-
-  .input-with-unit {
-    position: relative;
-  }
-
-  .input-with-unit input {
-    padding-right: 3.5rem;
-    font-size: 1.3rem;
-    font-weight: 700;
-  }
-
-  .input-with-unit span {
-    position: absolute;
-    top: 50%;
-    right: 1rem;
-    color: var(--pico-muted-color);
-    font-weight: 700;
-    transform: translateY(-50%);
-  }
-
-  .error-message {
-    margin: 0.65rem 0 0;
-    color: #a32724;
-    font-size: 0.87rem;
-    font-weight: 700;
-  }
-
-  .calculation-result {
-    padding: 1.35rem;
-    border-radius: 1.15rem;
-    background: var(--pico-card-sectioning-background-color);
-  }
-
-  .area-quantities {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .area-quantities > div {
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(16, 42, 44, 0.14);
-  }
-
-  .quantity-label {
-    margin-bottom: 0.25rem;
-    color: var(--pico-muted-color);
-    font-size: 0.82rem;
-    font-weight: 800;
-  }
-
-  .powder-value {
-    margin: 0;
-    color: var(--pico-color);
-    font-size: clamp(2.35rem, 10vw, 4rem);
-    font-weight: 850;
-    letter-spacing: -0.08em;
-    line-height: 0.95;
-  }
-
-  .area-quantities .liquid-value {
-    margin-bottom: 0;
-  }
-
-  .assumptions-list {
-    display: grid;
-    gap: 0.55rem;
-    margin: 1.25rem 0 0;
-  }
-
-  .assumptions-list div {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-top: 0.55rem;
-    border-top: 1px solid rgba(16, 42, 44, 0.1);
-  }
-
-  .assumptions-list dt,
-  .assumptions-list dd {
-    margin: 0;
-  }
-
-  .range-warning {
-    margin: 1.25rem 0 0;
-    padding: 0.9rem 1rem;
-    border-left: 4px solid var(--pico-primary);
-    color: #7d3023;
-    background: #fff4e7;
-    font-size: 0.88rem;
-    font-weight: 700;
-    line-height: 1.5;
-  }
-
-  dt {
-    margin-bottom: 0.3rem;
-    color: var(--pico-muted-color);
-    font-size: 0.74rem;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  dd {
-    margin: 0;
-    font-size: 0.9rem;
-    font-weight: 750;
-  }
-
-  @media (min-width: 44rem) {
-    .dimensions-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-</style>
